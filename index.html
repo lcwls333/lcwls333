@@ -1,0 +1,2026 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F5F9FF">
+<meta name="color-scheme" content="light">
+<title>明理 ClearLogic · 底层逻辑训练</title>
+<style>
+/* ============ tokens ============ */
+:root{
+  --blue:#0A84FF;
+  --blue-600:#0066CC;
+  --blue-100:#E6F2FF;
+  --sky:#64D2FF;
+  --bg:#F5F9FF;
+  --surface:#FFFFFF;
+  --surface-2:#EEF5FF;
+  --ink:#0B1B2B;
+  --sub:#51637A;
+  --ter:#8A9AAF;
+  --line:#E3EBF5;
+  --green:#34C759;
+  --orange:#FF9F0A;
+  --red:#FF453A;
+  --r:20px;
+  --r-sm:14px;
+  --r-lg:28px;
+  --shadow:0 8px 24px rgba(11,60,120,.07);
+  --shadow-lg:0 20px 60px rgba(11,60,120,.13);
+  --sidebar:264px;
+  --font:"SF Pro Display","SF Pro SC","PingFang SC","HarmonyOS Sans SC","MiSans","Microsoft YaHei",system-ui,sans-serif;
+  --mono:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;color:var(--ink);font-family:var(--font);
+  background:
+    radial-gradient(1200px 800px at 88% -12%, #D9EAFF 0%, rgba(217,234,255,0) 62%),
+    radial-gradient(900px 700px at -8% 104%, #E4F6FF 0%, rgba(228,246,255,0) 58%),
+    var(--bg);
+  min-height:100dvh;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:var(--blue-600);text-decoration:none}
+::selection{background:rgba(10,132,255,.18)}
+:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+
+/* ============ shell ============ */
+.shell{min-height:100dvh}
+.sidebar{
+  position:fixed;inset:0 auto 0 0;width:var(--sidebar);
+  padding:26px 18px 20px;display:flex;flex-direction:column;gap:22px;
+  background:rgba(255,255,255,.76);backdrop-filter:blur(24px) saturate(140%);
+  border-right:1px solid rgba(227,235,245,.9);z-index:30;overflow-y:auto;
+}
+.brand{display:flex;align-items:center;gap:12px;padding:2px 8px 4px}
+.logo{
+  width:44px;height:44px;border-radius:14px;flex:none;position:relative;
+  background:linear-gradient(145deg,#0A84FF,#4DA3FF 58%,#64D2FF);
+  box-shadow:0 8px 18px rgba(10,132,255,.28);
+}
+.logo i{position:absolute;left:12px;height:5px;border-radius:99px;background:#fff;display:block}
+.logo i:nth-child(1){top:12px;width:20px;opacity:.96}
+.logo i:nth-child(2){top:20px;width:15px;opacity:.74}
+.logo i:nth-child(3){top:28px;width:10px;opacity:.5}
+.brand b{display:block;font-size:18px;letter-spacing:-.02em;line-height:1.1}
+.brand small{display:block;color:var(--ter);font-size:10px;letter-spacing:.14em;text-transform:uppercase;margin-top:3px}
+.nav{display:flex;flex-direction:column;gap:4px}
+.nav-item{
+  display:flex;align-items:center;gap:12px;height:46px;padding:0 14px;border:0;border-radius:13px;
+  background:transparent;color:var(--sub);font-size:14px;font-weight:600;text-align:left;
+  transition:background .18s,color .18s,transform .18s;position:relative;
+}
+.nav-item svg{width:21px;height:21px;flex:none;opacity:.85}
+.nav-item:hover{background:rgba(230,242,255,.72);color:var(--ink)}
+.nav-item.active{background:var(--blue-100);color:var(--blue-600)}
+.nav-item.active:before{content:"";position:absolute;left:4px;top:12px;bottom:12px;width:3px;border-radius:3px;background:var(--blue)}
+.nav-item .mini{margin-left:auto;font-size:11px;font-weight:700;color:var(--blue-600);background:#fff;border-radius:99px;padding:2px 7px;box-shadow:0 1px 3px rgba(11,60,120,.08)}
+.side-card{
+  margin-top:auto;background:linear-gradient(165deg,#fff, #F4FAFF);
+  border:1px solid rgba(227,235,245,.95);border-radius:22px;padding:18px;box-shadow:var(--shadow);
+}
+.side-card .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.side-card .k{font-size:11px;font-weight:700;color:var(--ter);letter-spacing:.08em;text-transform:uppercase}
+.side-card .v{font-size:13px;color:var(--sub);font-weight:600}
+.side-foot{font-size:11px;color:var(--ter);line-height:1.7;padding:0 8px}
+.side-foot b{color:var(--sub);font-weight:600}
+
+.main{margin-left:var(--sidebar);min-height:100dvh;display:flex;flex-direction:column}
+.topbar{
+  position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:16px;
+  padding:18px 36px;background:rgba(245,249,255,.74);backdrop-filter:blur(18px);
+  border-bottom:1px solid rgba(227,235,245,.55);
+}
+.topbar .crumbs{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--ter);font-weight:600}
+.topbar .crumbs b{color:var(--ink);font-weight:700}
+.topbar .spacer{flex:1}
+.topbar .date{font-size:12px;color:var(--ter);font-weight:600;letter-spacing:.02em}
+.avatar{
+  width:36px;height:36px;border-radius:50%;display:grid;place-items:center;flex:none;
+  background:var(--blue-100);color:var(--blue-600);font-size:13px;font-weight:800;
+  border:1px solid rgba(10,132,255,.12);
+}
+.content{width:100%;max-width:1320px;margin:0 auto;padding:30px 36px 96px;flex:1}
+.view{animation:enter .34s cubic-bezier(.2,.8,.2,1) both}
+@keyframes enter{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.bottom-nav{display:none}
+
+/* ============ typography ============ */
+h1,h2,h3,h4,p{margin:0}
+.h1{font-size:clamp(30px,3.2vw,44px);line-height:1.08;letter-spacing:-.035em;font-weight:800}
+.h2{font-size:clamp(21px,1.9vw,27px);line-height:1.2;letter-spacing:-.025em;font-weight:800}
+.h3{font-size:18px;line-height:1.3;letter-spacing:-.015em;font-weight:700}
+.lead{font-size:15px;line-height:1.7;color:var(--sub)}
+.muted{color:var(--sub)}
+.ter{color:var(--ter)}
+.tiny{font-size:12px;line-height:1.55;color:var(--ter)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.grad-text{background:linear-gradient(120deg,#0066CC,#0A84FF 55%,#64D2FF);-webkit-background-clip:text;background-clip:text;color:transparent}
+.kicker{font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:var(--blue-600)}
+
+/* ============ layout utilities ============ */
+.section{margin-top:30px}
+.section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:14px}
+.section-head .sub{font-size:13px;color:var(--ter);margin-top:5px}
+.grid{display:grid;gap:18px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.row{display:flex;align-items:center;gap:10px}
+.between{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.wrap{flex-wrap:wrap}
+.stack{display:flex;flex-direction:column;gap:12px}
+.center{display:grid;place-items:center}
+.hidden{display:none!important}
+
+/* ============ cards ============ */
+.card{
+  background:rgba(255,255,255,.94);border:1px solid rgba(227,235,245,.95);
+  border-radius:var(--r);box-shadow:var(--shadow);padding:24px;
+}
+.card.tight{padding:18px}
+.card.flat{box-shadow:none}
+.card.hoverable{transition:transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s,border-color .22s;cursor:pointer}
+.card.hoverable:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:#D3E5F8}
+.card.soft{background:linear-gradient(180deg,#fff,#F8FBFF)}
+.hero{
+  position:relative;overflow:hidden;border:0;color:#fff;
+  background:linear-gradient(135deg,#0A6FE8 0%,#0A84FF 48%,#54C6FF 100%);
+  box-shadow:0 18px 44px rgba(10,110,220,.26);
+}
+.hero:after{
+  content:"";position:absolute;width:360px;height:360px;border-radius:50%;
+  right:-120px;top:-160px;background:radial-gradient(circle,rgba(255,255,255,.34),rgba(255,255,255,0) 68%);
+}
+.hero:before{
+  content:"";position:absolute;width:240px;height:240px;border-radius:50%;
+  left:-100px;bottom:-140px;background:radial-gradient(circle,rgba(255,255,255,.2),rgba(255,255,255,0) 70%);
+}
+.hero .kicker{color:rgba(255,255,255,.78)}
+.hero > *{position:relative;z-index:2}
+.hero:before,.hero:after{pointer-events:none;z-index:1}
+.hero .lead{color:rgba(255,255,255,.86)}
+.hero .ghost{background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.28);backdrop-filter:blur(8px)}
+.hero .ghost:hover{background:rgba(255,255,255,.24)}
+.hero .solid{background:#fff;color:var(--blue-600);box-shadow:0 10px 24px rgba(0,40,90,.18)}
+.hero .solid:hover{transform:translateY(-1px)}
+
+/* ============ buttons ============ */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  height:46px;padding:0 20px;border-radius:14px;border:1px solid transparent;
+  font-size:14px;font-weight:700;letter-spacing:-.01em;white-space:nowrap;
+  transition:transform .16s,box-shadow .2s,background .2s,color .2s,border-color .2s;
+}
+.btn svg{width:18px;height:18px;flex:none}
+.btn:active{transform:scale(.975)}
+.btn-primary{background:linear-gradient(135deg,#0A84FF,#3B9BFF);color:#fff;box-shadow:0 9px 22px rgba(10,132,255,.28)}
+.btn-primary:hover{box-shadow:0 12px 30px rgba(10,132,255,.36);transform:translateY(-1px)}
+.btn-ghost{background:var(--blue-100);color:var(--blue-600)}
+.btn-ghost:hover{background:#DBEEFF}
+.btn-quiet{background:transparent;color:var(--sub);border-color:var(--line)}
+.btn-quiet:hover{background:#F3F8FF;color:var(--ink)}
+.btn-danger{background:#FFECEB;color:var(--red)}
+.btn-danger:hover{background:#FFE0DE}
+.btn-sm{height:36px;padding:0 14px;border-radius:11px;font-size:12.5px}
+.btn-lg{height:54px;padding:0 26px;border-radius:16px;font-size:15px}
+.btn-block{width:100%}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.icon-btn{
+  width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:#fff;
+  display:grid;place-items:center;color:var(--sub);transition:background .18s,color .18s,transform .18s;
+}
+.icon-btn:hover{background:var(--blue-100);color:var(--blue-600)}
+.icon-btn svg{width:19px;height:19px}
+
+/* ============ chips / tags ============ */
+.chip{
+  display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 11px;border-radius:99px;
+  background:var(--blue-100);color:var(--blue-600);font-size:11.5px;font-weight:700;white-space:nowrap;
+}
+.chip.gray{background:#F1F5FA;color:var(--sub)}
+.chip.green{background:#E9F9EE;color:#1E8E3E}
+.chip.orange{background:#FFF4E3;color:#B96B00}
+.chip.red{background:#FFECEB;color:var(--red)}
+.chip.plain{background:#fff;border:1px solid var(--line);color:var(--sub)}
+.tag{font-size:11px;font-weight:700;color:var(--ter);letter-spacing:.02em}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--blue);flex:none}
+.dot.green{background:var(--green)}
+.dot.orange{background:var(--orange)}
+.dot.red{background:var(--red)}
+
+/* ============ rings / progress ============ */
+.ring{position:relative;width:104px;height:104px;border-radius:50%;flex:none;
+  background:conic-gradient(var(--blue) calc(var(--p,0)*1%), var(--blue-100) 0);
+  display:grid;place-items:center;transition:background .5s;
+}
+.ring:before{content:"";position:absolute;inset:9px;border-radius:50%;background:#fff}
+.ring .ring-in{position:relative;text-align:center;line-height:1.05}
+.ring .ring-in b{display:block;font-size:24px;font-weight:800;letter-spacing:-.04em}
+.ring .ring-in span{display:block;font-size:10px;color:var(--ter);font-weight:700;margin-top:4px}
+.ring.sm{width:64px;height:64px}
+.ring.sm:before{inset:6px}
+.ring.sm .ring-in b{font-size:15px}
+.ring.sm .ring-in span{font-size:8px;margin-top:2px}
+.ring.green{background:conic-gradient(var(--green) calc(var(--p,0)*1%), #E9F9EE 0)}
+.progress{height:8px;border-radius:99px;background:var(--blue-100);overflow:hidden}
+.progress > i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#0A84FF,#64D2FF);transition:width .4s}
+.progress.thin{height:6px}
+.progress.green > i{background:linear-gradient(90deg,#34C759,#7BE39A)}
+
+/* ============ today ============ */
+.today-hero{display:grid;grid-template-columns:1.35fr .65fr;gap:18px}
+.today-hero .hero{padding:28px 28px 26px;display:flex;flex-direction:column;min-height:230px}
+.today-hero .hero h1{margin-top:8px}
+.today-hero .hero .lead{margin-top:10px;max-width:520px}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:auto;padding-top:22px}
+.streak-card{display:flex;align-items:center;gap:18px;padding:22px}
+.streak-card .meta{display:flex;flex-direction:column;gap:4px}
+.streak-card .meta b{font-size:19px;letter-spacing:-.02em}
+.streak-card .meta span{font-size:12px;color:var(--sub)}
+.quick-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.stat{padding:16px;border-radius:16px;background:#F8FBFF;border:1px solid var(--line)}
+.stat b{display:block;font-size:22px;letter-spacing:-.04em;font-weight:800}
+.stat span{display:block;font-size:11px;color:var(--ter);margin-top:3px;font-weight:600}
+.weak-list{display:flex;flex-direction:column;gap:13px}
+.weak-row{display:grid;grid-template-columns:96px 1fr 42px;align-items:center;gap:12px}
+.weak-row .name{font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.weak-row .val{font-size:11px;color:var(--ter);text-align:right;font-weight:700}
+.weak-row .track{height:7px;border-radius:99px;background:#EEF5FF;overflow:hidden}
+.weak-row .track i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#0A84FF,#64D2FF)}
+.case-mini{display:flex;gap:16px;align-items:flex-start}
+.case-mini .cover{
+  width:92px;height:92px;border-radius:18px;flex:none;display:grid;place-items:center;
+  background:linear-gradient(145deg,#E6F2FF,#F7FBFF);color:var(--blue-600);border:1px solid #DCEBFA;
+}
+.case-mini .cover svg{width:34px;height:34px;opacity:.9}
+.case-mini h3{font-size:15px;line-height:1.45;margin:2px 0 6px}
+.case-mini p{font-size:12px;color:var(--sub);line-height:1.6}
+.canvas-mini{border-left:3px solid var(--blue);padding-left:16px}
+.canvas-mini .step{font-size:11px;color:var(--blue-600);font-weight:800;letter-spacing:.04em}
+.canvas-mini h3{font-size:15px;margin:5px 0 6px}
+
+/* ============ training ============ */
+.tabs{display:inline-flex;padding:4px;border-radius:14px;background:var(--surface-2);gap:3px}
+.tab{height:36px;padding:0 16px;border:0;border-radius:11px;background:transparent;color:var(--sub);font-size:12.5px;font-weight:700;transition:.18s}
+.tab.active{background:#fff;color:var(--ink);box-shadow:0 2px 8px rgba(11,60,120,.08)}
+.bias-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.bias-tile{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:16px;border:1px solid var(--line);background:#fff;transition:.18s;cursor:pointer}
+.bias-tile:hover{border-color:#C9E2FF;background:#FAFDFF;transform:translateY(-1px)}
+.bias-tile .idx{width:34px;height:34px;border-radius:11px;background:var(--blue-100);color:var(--blue-600);display:grid;place-items:center;font-size:10px;font-weight:800;flex:none}
+.bias-tile .body{min-width:0;flex:1}
+.bias-tile b{display:block;font-size:13.5px;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bias-tile span{display:block;font-size:10.5px;color:var(--ter);margin-top:2px}
+.bias-tile .mini-bar{width:54px;height:5px;border-radius:99px;background:#EEF5FF;overflow:hidden;flex:none}
+.bias-tile .mini-bar i{display:block;height:100%;background:var(--blue);border-radius:99px}
+.mistake-row{display:flex;gap:14px;padding:15px 0;border-bottom:1px solid var(--line);align-items:flex-start}
+.mistake-row:last-child{border-bottom:0}
+.mistake-row .badge{width:28px;height:28px;border-radius:9px;background:#FFECEB;color:var(--red);display:grid;place-items:center;font-size:11px;font-weight:800;flex:none}
+.mistake-row p{font-size:12.5px;color:var(--sub);line-height:1.6;margin-top:3px}
+
+/* ============ session ============ */
+.session-wrap{max-width:860px;margin:0 auto}
+.session-top{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.session-top .progress{flex:1}
+.session-card{padding:30px}
+.session-meta{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.scenario{font-size:clamp(18px,1.8vw,23px);line-height:1.72;letter-spacing:-.01em;font-weight:650;margin:14px 0 24px;text-wrap:pretty}
+.options{display:grid;gap:10px}
+.option{display:flex;align-items:center;gap:14px;padding:15px 17px;border:1px solid var(--line);border-radius:16px;background:#fff;text-align:left;transition:.18s;width:100%}
+.option:hover{border-color:#B9D9FF;background:#FAFDFF;transform:translateY(-1px)}
+.option .key{width:30px;height:30px;border-radius:9px;background:#F1F6FC;color:var(--sub);display:grid;place-items:center;font-size:11px;font-weight:800;flex:none;transition:.18s}
+.option .txt{font-size:14px;font-weight:650;line-height:1.4}
+.option .check{margin-left:auto;width:20px;height:20px;opacity:0;color:var(--blue)}
+.option.selected{border-color:var(--blue);background:var(--blue-100);box-shadow:0 0 0 3px rgba(10,132,255,.1)}
+.option.selected .key{background:var(--blue);color:#fff}
+.option.selected .check{opacity:1}
+.option.correct{border-color:#A9E6BC;background:#F0FBF3}
+.option.correct .key{background:var(--green);color:#fff}
+.option.wrong{border-color:#FFC9C5;background:#FFF4F3}
+.option.wrong .key{background:var(--red);color:#fff}
+.option.dim{opacity:.55}
+.option:disabled{cursor:default}
+.confidence{margin-top:24px;padding:16px 18px;border-radius:16px;background:#F8FBFF;border:1px solid var(--line)}
+.confidence .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.confidence .top b{font-size:12.5px}
+.confidence .top span{font-size:11px;color:var(--ter)}
+input[type=range]{width:100%;accent-color:var(--blue);height:24px;cursor:pointer}
+.confidence .scale{display:flex;justify-content:space-between;font-size:10px;color:var(--ter);margin-top:2px}
+.feedback{margin-top:18px;border-radius:18px;border:1px solid #D9E9FA;background:linear-gradient(180deg,#F7FBFF,#fff);padding:22px}
+.feedback.good{border-color:#BFEBD0;background:linear-gradient(180deg,#F2FCF5,#fff)}
+.feedback.bad{border-color:#FFD6D2;background:linear-gradient(180deg,#FFF6F5,#fff)}
+.feedback .head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.feedback .head b{font-size:15px}
+.feedback p{font-size:13px;line-height:1.7;color:var(--sub);margin-top:7px}
+.feedback .label{font-size:10px;font-weight:800;color:var(--ter);letter-spacing:.06em;text-transform:uppercase;margin-top:14px}
+.feedback .val{font-size:13px;line-height:1.65;color:var(--ink);margin-top:3px}
+
+/* ============ result ============ */
+.result-grid{display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start}
+.result-hero{text-align:center;padding:30px 22px}
+.result-hero .ring{margin:0 auto 16px}
+.result-hero h2{font-size:20px}
+.result-hero p{font-size:12.5px;color:var(--sub);margin-top:6px}
+.result-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:18px}
+.result-stat{padding:12px;border-radius:13px;background:#F8FBFF;border:1px solid var(--line);text-align:left}
+.result-stat b{display:block;font-size:19px;letter-spacing:-.03em}
+.result-stat span{display:block;font-size:10px;color:var(--ter);margin-top:2px;font-weight:700}
+.review-item{padding:14px 0;border-bottom:1px solid var(--line)}
+.review-item:last-child{border-bottom:0}
+.review-item .q{font-size:12.5px;line-height:1.55;font-weight:650}
+.review-item .a{font-size:11.5px;color:var(--sub);margin-top:4px}
+
+/* ============ cases ============ */
+.case-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.case-card{display:flex;flex-direction:column;min-height:190px;padding:22px;position:relative;overflow:hidden}
+.case-card .top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.case-card .domain{font-size:10.5px;font-weight:800;color:var(--blue-600);letter-spacing:.06em;text-transform:uppercase}
+.case-card h3{font-size:18px;line-height:1.35;margin:14px 0 8px;letter-spacing:-.02em}
+.case-card p{font-size:12px;line-height:1.65;color:var(--sub);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.case-card .foot{margin-top:auto;padding-top:16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.case-card .go{font-size:11px;font-weight:800;color:var(--blue-600)}
+.reading{max-width:820px;margin:0 auto}
+.reading .block{padding:26px 28px}
+.reading h2{font-size:22px;margin-bottom:12px}
+.reading p{font-size:14.5px;line-height:1.85;color:#26384D;margin-top:10px;text-wrap:pretty}
+.reading .quote{border-left:3px solid var(--blue);padding:2px 0 2px 16px;color:var(--sub);font-size:13px;line-height:1.75;margin:16px 0}
+.case-decision{border:1px solid #CFE4FA;background:linear-gradient(180deg,#F7FBFF,#fff);border-radius:20px;padding:22px;margin-top:20px}
+.case-decision h3{font-size:17px;margin-bottom:4px}
+.case-decision .options{margin-top:14px}
+.case-decision .options .option{padding:12px 14px}
+.case-block{border:1px solid var(--line);border-radius:18px;padding:20px;background:#fff;margin-top:14px;animation:enter .3s both}
+.case-block .n{font-size:10px;font-weight:800;color:var(--blue-600);letter-spacing:.08em;text-transform:uppercase}
+.case-block p{font-size:14px;line-height:1.8;margin-top:6px}
+.case-progress{display:flex;gap:6px;margin-bottom:18px}
+.case-progress i{height:4px;border-radius:99px;background:var(--blue-100);flex:1}
+.case-progress i.on{background:var(--blue)}
+
+/* ============ canvas ============ */
+.canvas-layout{display:grid;grid-template-columns:220px 1fr;gap:20px;align-items:start}
+.stepper{display:flex;flex-direction:column;gap:4px;position:sticky;top:96px}
+.step-dot{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:11px;border:0;background:transparent;text-align:left;transition:.16s}
+.step-dot:hover{background:#F3F9FF}
+.step-dot .num{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:#EEF5FF;color:var(--blue-600);font-size:10px;font-weight:800;flex:none;transition:.16s}
+.step-dot .lbl{font-size:11.5px;font-weight:650;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.step-dot.active{background:var(--blue-100)}
+.step-dot.active .num{background:var(--blue);color:#fff}
+.step-dot.active .lbl{color:var(--blue-600)}
+.step-dot.done .num{background:#E9F9EE;color:#1E8E3E}
+.canvas-editor{padding:28px}
+.canvas-editor .head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px}
+.canvas-editor .head h2{font-size:22px}
+.canvas-editor .head p{font-size:12px;color:var(--sub);margin-top:5px}
+.canvas-editor .head .save{font-size:10.5px;color:var(--ter);white-space:nowrap;font-weight:600}
+.canvas-editor .head .save.ok{color:var(--green)}
+.canvas-field{margin-top:16px}
+.canvas-field label{display:block;font-size:11.5px;font-weight:700;color:var(--sub);margin-bottom:6px}
+.canvas-field label em{color:var(--red);font-style:normal;margin-left:2px}
+.canvas-field .hint{font-size:10.5px;color:var(--ter);margin-top:5px;line-height:1.55}
+.bias-checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:6px}
+.bias-check{display:flex;align-items:center;gap:8px;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:11px;font-weight:600;color:var(--sub);text-align:left}
+.bias-check.on{border-color:var(--blue);background:var(--blue-100);color:var(--blue-600)}
+.bias-check .box{width:15px;height:15px;border-radius:4px;border:1.5px solid #C9D6E6;display:grid;place-items:center;flex:none}
+.bias-check.on .box{background:var(--blue);border-color:var(--blue);color:#fff}
+.bias-check .box svg{width:10px;height:10px}
+.canvas-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:24px;padding-top:18px;border-top:1px solid var(--line)}
+.score-card{display:flex;align-items:center;gap:18px;padding:18px;border-radius:16px;background:#F8FBFF;border:1px solid var(--line);margin-top:16px}
+.score-card .ring{width:74px;height:74px}
+.score-card .ring:before{inset:7px}
+.score-card .ring .ring-in b{font-size:18px}
+.score-card p{font-size:11.5px;color:var(--sub);line-height:1.6}
+
+/* ============ review ============ */
+.chart-card{padding:22px}
+.chart{display:flex;align-items:flex-end;gap:10px;height:150px;margin-top:16px}
+.chart .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end}
+.chart .bar{width:100%;max-width:34px;border-radius:8px 8px 4px 4px;background:linear-gradient(180deg,#0A84FF,#8FD3FF);min-height:4px;transition:height .4s}
+.chart .cap{font-size:9.5px;color:var(--ter);font-weight:700}
+.calib{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:16px}
+.calib .col{text-align:center}
+.calib .pair{display:flex;align-items:flex-end;justify-content:center;gap:3px;height:110px}
+.calib .bar{width:12px;border-radius:5px 5px 2px 2px;min-height:3px}
+.calib .bar.p{background:#BFDDFB}
+.calib .bar.a{background:var(--blue)}
+.calib .lbl{font-size:9.5px;color:var(--ter);margin-top:6px;font-weight:700}
+.legend{display:flex;gap:14px;font-size:10px;color:var(--ter);margin-top:10px}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:3px;margin-right:5px}
+.log-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.log-row:last-child{border-bottom:0}
+.log-row .ico{width:34px;height:34px;border-radius:11px;background:var(--blue-100);color:var(--blue-600);display:grid;place-items:center;flex:none}
+.log-row .ico svg{width:16px;height:16px}
+.log-row .body{flex:1;min-width:0}
+.log-row b{display:block;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.log-row span{display:block;font-size:10.5px;color:var(--ter);margin-top:2px}
+
+/* ============ profile / settings ============ */
+.profile-hero{display:flex;align-items:center;gap:18px;padding:26px}
+.profile-hero .avatar{width:64px;height:64px;font-size:22px}
+.profile-hero h2{font-size:22px}
+.profile-hero p{font-size:12px;color:var(--sub);margin-top:4px}
+.settings-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 0;border-bottom:1px solid var(--line)}
+.settings-row:last-child{border-bottom:0}
+.settings-row .lbl{font-size:13px;font-weight:650}
+.settings-row .desc{font-size:10.5px;color:var(--ter);margin-top:3px;line-height:1.5}
+.segment{display:inline-flex;padding:3px;border-radius:11px;background:var(--surface-2);gap:2px}
+.segment button{height:30px;padding:0 12px;border:0;border-radius:8px;background:transparent;color:var(--sub);font-size:11px;font-weight:700}
+.segment button.on{background:#fff;color:var(--ink);box-shadow:0 2px 7px rgba(11,60,120,.08)}
+
+/* ============ inputs ============ */
+.input,.textarea,.select{
+  width:100%;border:1px solid var(--line);background:#F8FBFF;border-radius:13px;
+  padding:12px 14px;font-size:13.5px;line-height:1.55;transition:.18s;
+}
+.input:focus,.textarea:focus,.select:focus{outline:none;border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(10,132,255,.1)}
+.textarea{min-height:96px;resize:vertical}
+.input::placeholder,.textarea::placeholder{color:#A8B6C6}
+.field label{display:block;font-size:11px;font-weight:700;color:var(--sub);margin-bottom:6px}
+
+/* ============ empty / toast / modal ============ */
+.empty{text-align:center;padding:44px 20px}
+.empty .art{width:76px;height:76px;border-radius:24px;margin:0 auto 16px;display:grid;place-items:center;background:linear-gradient(145deg,#EAF4FF,#F9FCFF);color:var(--blue-600);border:1px solid #DCEBFA}
+.empty .art svg{width:30px;height:30px}
+.empty h3{font-size:16px}
+.empty p{font-size:12px;color:var(--ter);margin-top:6px;line-height:1.6}
+.toast{
+  position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);z-index:100;
+  background:rgba(11,27,43,.94);color:#fff;font-size:12px;font-weight:600;
+  padding:12px 18px;border-radius:13px;box-shadow:0 12px 30px rgba(0,0,0,.2);
+  opacity:0;pointer-events:none;transition:opacity .22s,transform .22s;max-width:86vw;text-align:center;
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.modal{
+  position:fixed;inset:0;z-index:90;background:rgba(8,24,44,.28);backdrop-filter:blur(8px);
+  display:grid;place-items:center;padding:20px;animation:fade .2s both;
+}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.modal .box{width:min(480px,100%);background:#fff;border-radius:26px;padding:28px;box-shadow:0 30px 80px rgba(0,0,0,.2);animation:pop .3s cubic-bezier(.2,.9,.2,1) both}
+@keyframes pop{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:none}}
+.modal h3{font-size:20px;margin-bottom:8px}
+.modal p{font-size:12.5px;color:var(--sub);line-height:1.7}
+.onboard{position:fixed;inset:0;z-index:95;display:grid;place-items:center;padding:22px;background:
+  radial-gradient(900px 600px at 80% 0%, #D8EBFF, transparent 60%),
+  radial-gradient(700px 500px at 0% 100%, #E4F6FF, transparent 60%),
+  #F5F9FF;overflow:auto}
+.onboard .panel{width:min(560px,100%);background:rgba(255,255,255,.92);border:1px solid rgba(227,235,245,.9);border-radius:30px;padding:34px;box-shadow:var(--shadow-lg);backdrop-filter:blur(20px)}
+.onboard .logo{width:58px;height:58px;border-radius:18px;margin-bottom:18px}
+.onboard .logo i{left:16px}
+.onboard .logo i:nth-child(1){top:16px;width:26px}
+.onboard .logo i:nth-child(2){top:26px;width:19px}
+.onboard .logo i:nth-child(3){top:36px;width:12px}
+.onboard h1{font-size:clamp(28px,4vw,38px);line-height:1.12;letter-spacing:-.035em;margin-top:4px}
+.onboard .lead{margin-top:10px;font-size:13.5px;line-height:1.7}
+.onboard .points{display:flex;flex-direction:column;gap:9px;margin:20px 0}
+.onboard .point{display:flex;gap:10px;font-size:12px;color:var(--sub);line-height:1.6}
+.onboard .point .n{width:20px;height:20px;border-radius:50%;background:var(--blue-100);color:var(--blue-600);display:grid;place-items:center;font-size:9px;font-weight:800;flex:none;margin-top:1px}
+.onboard .field{margin-top:16px}
+.onboard .actions{display:flex;gap:10px;align-items:center;margin-top:22px}
+.onboard .skip{font-size:11px;color:var(--ter);background:none;border:0;padding:8px}
+
+/* ============ responsive ============ */
+@media(max-width:1100px){
+  .today-hero{grid-template-columns:1fr}
+  .result-grid{grid-template-columns:1fr}
+  .canvas-layout{grid-template-columns:1fr}
+  .stepper{position:static;flex-direction:row;overflow-x:auto;padding-bottom:4px}
+  .step-dot{flex:none}
+  .step-dot .lbl{display:none}
+}
+@media(max-width:900px){
+  :root{--sidebar:0px}
+  .sidebar{display:none}
+  .main{margin-left:0}
+  .topbar{padding:14px 18px}
+  .content{padding:20px 18px 96px}
+  .bottom-nav{
+    display:flex;position:fixed;left:0;right:0;bottom:0;z-index:40;
+    height:72px;padding:7px 8px calc(7px + env(safe-area-inset-bottom));
+    background:rgba(255,255,255,.9);backdrop-filter:blur(22px);
+    border-top:1px solid rgba(227,235,245,.9);justify-content:space-around;align-items:center;
+  }
+  .bottom-nav button{display:flex;flex-direction:column;align-items:center;gap:3px;border:0;background:none;color:var(--ter);font-size:9px;font-weight:700;min-width:52px;padding:4px 2px;border-radius:12px}
+  .bottom-nav button svg{width:21px;height:21px}
+  .bottom-nav button.active{color:var(--blue-600);background:var(--blue-100)}
+  .toast{bottom:calc(84px + env(safe-area-inset-bottom))}
+  .g4{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(2,1fr)}
+  .case-grid{grid-template-columns:1fr}
+  .bias-grid{grid-template-columns:1fr}
+  .topbar .date{display:none}
+  .session-card{padding:22px}
+  .reading .block{padding:22px}
+  .canvas-editor{padding:22px}
+}
+@media(max-width:640px){
+  .content{padding:16px 14px 92px}
+  .topbar{padding:12px 14px}
+  .topbar .crumbs{font-size:12px}
+  .h1{font-size:30px}
+  .today-hero .hero{padding:22px;min-height:220px}
+  .g2,.g3,.g4{grid-template-columns:1fr}
+  .quick-stats{grid-template-columns:repeat(3,1fr)}
+  .stat{padding:12px}
+  .stat b{font-size:18px}
+  .card{padding:18px;border-radius:18px}
+  .result-stats{grid-template-columns:1fr 1fr}
+  .streak-card{gap:12px;padding:18px}
+  .ring{width:92px;height:92px}
+  .onboard .panel{padding:24px;border-radius:24px}
+  .onboard .actions{flex-direction:column;align-items:stretch}
+  .onboard .skip{align-self:center}
+  .bias-checks{grid-template-columns:1fr}
+  .weak-row{grid-template-columns:84px 1fr 38px}
+  .session-card{padding:18px}
+  .scenario{font-size:17px}
+  .option{padding:13px 14px}
+  .option .txt{font-size:13px}
+}
+
+/* ============ 4K ============ */
+@media(min-width:1800px){
+  html{font-size:18px}
+  .sidebar{width:300px;padding:32px 22px}
+  .main{margin-left:300px}
+  .content{max-width:1640px;padding:40px 56px 120px}
+  .topbar{padding:22px 56px}
+  .today-hero .hero{min-height:300px;padding:38px}
+  .card{padding:28px}
+  .session-wrap{max-width:1040px}
+  .reading{max-width:980px}
+  .case-grid{gap:22px}
+  .g3{gap:22px}
+  .bias-grid{grid-template-columns:repeat(2,1fr);gap:16px}
+}
+@media(min-width:2600px){
+  .content{max-width:1900px}
+  .h1{font-size:52px}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*:before,*:after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+}
+
+/* ============ print ============ */
+@media print{
+  body{background:#fff!important}
+  .sidebar,.topbar,.bottom-nav,.no-print,.toast,.modal,.onboard{display:none!important}
+  .main{margin:0!important}
+  .content{max-width:none!important;padding:0!important}
+  .card{box-shadow:none!important;border:1px solid #ddd!important;break-inside:avoid}
+  .hero{background:#0A84FF!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .print-only{display:block!important}
+  a{color:inherit}
+}
+.print-only{display:none}
+</style>
+
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="明理">
+<meta name="mobile-web-app-capable" content="yes">
+<style>
+@media (display-mode: standalone){
+  .sidebar{padding-top:calc(26px + env(safe-area-inset-top))}
+  .topbar{padding-top:calc(18px + env(safe-area-inset-top))}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<noscript><div style="max-width:560px;margin:80px auto;padding:24px;background:#fff;border:1px solid #E3EBF5;border-radius:20px;font-family:sans-serif;color:#0B1B2B"><b>需要开启 JavaScript</b><p style="color:#51637A;font-size:13px;line-height:1.7">这是单文件离线应用，页面渲染与本地数据都依赖 JavaScript。请在浏览器设置中允许 JavaScript 后重新打开。</p></div></noscript>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<div id="modal-root"></div>
+<script>
+
+/* ============================================================
+   明理 ClearLogic · 离线单文件版
+   数据：16 项偏差 / 60 道情境题 / 6 个案例 / 6 套模板 / 七步画布
+   ============================================================ */
+
+const BIASES = [
+  {c:'B01',n:'确认偏误',d:'更愿意寻找和相信支持既有观点的信息',miss:'没有主动寻找反面证据，或把反例解释掉',tip:'先写一条能推翻自己的证据，再决定是否继续',tr:'你最近一次只找支持自己的信息是什么时候？'},
+  {c:'B02',n:'可得性启发',d:'用容易想起的例子估计频率或概率',miss:'忽略了基准率，只凭印象中最鲜活的案例',tip:'先查总体概率，再问“我为什么恰好想起这个例子”',tr:'你最近一次因为刷到很多同类内容而高估某件事？'},
+  {c:'B03',n:'锚定效应',d:'先接触的数字或信息过度影响后续判断',miss:'没有独立估值，围绕第一个数字做微调',tip:'先写下自己的估值，再看对方报价',tr:'你最近一次被“原价/首个方案”带偏是什么时候？'},
+  {c:'B04',n:'沉没成本',d:'因已投入而继续，而不是看未来边际收益',miss:'把已经收不回的成本当成继续的理由',tip:'问“如果今天从零开始，我还会选它吗？”',tr:'你最近一次因为“都投入这么多了”而继续？'},
+  {c:'B05',n:'过度自信',d:'高估判断准确性与控制力',miss:'区间过窄，忽略自己不知道的部分',tip:'给出最好/最坏/最可能三档，并写下反证',tr:'你最近一次低估任务用时或高估把握？'},
+  {c:'B06',n:'后见之明',d:'事后认为“早就知道”，低估事前不确定性',miss:'用结果反推当时的信息，忽略当时不知道什么',tip:'复盘时先写“当时可得的信息”，再写结果',tr:'你最近一次说“我早就知道”是什么事？'},
+  {c:'B07',n:'代表性启发',d:'用“像不像某类”替代概率判断，忽视基准率',miss:'只看人物/产品像不像，不看总体分布',tip:'先问基准率，再看个体特征',tr:'你最近一次因为“看起来像”而判断一个人/产品？'},
+  {c:'B08',n:'基本归因错误',d:'解释他人时高估人品，低估情境',miss:'没有考虑对方的时间、资源与外部约束',tip:'先列 3 个情境原因，再列 1 个性格原因',tr:'你最近一次把别人的问题归因于“他就是懒/坏”？'},
+  {c:'B09',n:'框架效应',d:'收益/损失表述不同导致选择不同',miss:'没有把同一信息换成另一种说法再判断',tip:'用“成功率/失败率、省多少钱/打几折”各说一遍',tr:'你最近一次被“成功率 90%”这类说法影响？'},
+  {c:'B10',n:'损失厌恶',d:'损失的痛苦大于等量收益的快乐',miss:'为了避免小损失而放弃更大的期望收益',tip:'问“如果换成收益框架，我还会这样选吗？”',tr:'你最近一次因为怕亏而错过机会？'},
+  {c:'B11',n:'从众 / 群体思维',d:'为维持一致而压制异议',miss:'没有人扮演反对者，异议被沉默掉',tip:'指定一个人专门提反方意见，或先匿名写分歧',tr:'你最近一次在会上有疑问但没说？'},
+  {c:'B12',n:'光环效应',d:'一个突出优点影响其他维度评价',miss:'把名气/学历/外貌当成了能力或质量证据',tip:'把评价拆成 3 个独立维度，分别找证据',tr:'你最近一次因为一个人/品牌的光环而放宽标准？'},
+  {c:'B13',n:'幸存者偏差',d:'只看到幸存样本，忽略消失的样本',miss:'没有问“失败的那些去哪了”',tip:'先找失败样本与分母，再看成功率',tr:'你最近一次只研究成功者、没看失败者？'},
+  {c:'B14',n:'因果错觉',d:'把相关、顺序或巧合当作因果',miss:'没有排除共同原因、反向因果与巧合',tip:'问“有没有第三个变量同时影响两者？”',tr:'你最近一次把“先后发生”当成“因为所以”？'},
+  {c:'B15',n:'现状偏差',d:'倾向维持现状，即使改变更优',miss:'把“不改变”当成零成本，忽略机会成本',tip:'把“维持现状”也列成一个方案，算它的代价',tr:'你最近一次因为“懒得改”而留在不合适的状态？'},
+  {c:'B16',n:'零风险偏误',d:'追求彻底消除某一风险，忽视成本与概率',miss:'没有比较风险降低的幅度与付出的代价',tip:'问“从 1% 降到 0 要花多少？从 1% 降到 0.1% 呢？”',tr:'你最近一次为了“绝对安全”付出过高代价？'}
+];
+
+const Q = [
+  {b:'B01',d:1,s:'你准备买入一只股票，只反复阅读看多研报，看到风险提示就快速跳过。',o:['B01','B02','B05','B12'],e:'你只接触支持买入判断的信息，并主动跳过反面材料，这是确认偏误。'},
+  {b:'B01',d:2,s:'面试时你很想招这个人，于是只问能证明他“靠谱”的问题，没问失败经历。',o:['B01','B08','B12','B07'],e:'问题设计只服务于已有结论，缺少能推翻判断的信息。'},
+  {b:'B01',d:1,s:'你坚信某种补剂有效，只搜索“补剂有效”的文章，看到“无效”的研究就认为样本太小。',o:['B01','B02','B13','B14'],e:'对反面证据设置更高门槛，是确认偏误的典型表现。'},
+  {b:'B01',d:1,s:'你想买一款耳机，看完测评后只记住好评，差评一句“可能是黑子”就带过。',o:['B01','B02','B12','B13'],e:'你在保护已形成的偏好，而不是评估证据。'},
+  {b:'B02',d:1,s:'刚看到空难新闻，你觉得坐飞机很危险，却很少想到汽车事故的基准概率。',o:['B02','B10','B16','B05'],e:'空难画面鲜活、容易想起，于是高估了它的频率。'},
+  {b:'B02',d:2,s:'身边几个朋友跳槽都涨了薪，你据此认为“现在市场机会很多”。',o:['B02','B13','B11','B05'],e:'你用小样本、易想起的例子代替了整体市场数据。'},
+  {b:'B02',d:2,s:'短视频里全是“副业月入过万”，你觉得这事成功的概率很高。',o:['B02','B13','B05','B03'],e:'平台只推成功案例，你看到的是被筛选后的样本。'},
+  {b:'B02',d:2,s:'最近公司裁员，你觉得“所有行业都不稳定”，却没有任何行业数据。',o:['B02','B01','B15','B10'],e:'最近、最强烈的信息支配了你的整体判断。'},
+  {b:'B03',d:2,s:'房东先报 8000 元，你觉得谈到 7500 元很划算，却没查同小区成交价。',o:['B03','B09','B04','B10'],e:'首个报价成了锚点，你的判断围绕它微调。'},
+  {b:'B03',d:1,s:'商品标着“原价 999，现价 599”，你觉得赚了，没比较同类产品价格。',o:['B03','B09','B10','B15'],e:'原价是人为锚点，不等于真实价值。'},
+  {b:'B03',d:2,s:'第一份 offer 月薪 20k，第二份 22k，你觉得第二份“高了不少”。',o:['B03','B10','B05','B04'],e:'第一份 offer 成了参照点；22k 本身是否合理，需要独立评估。'},
+  {b:'B03',d:2,s:'会议第一个方案定了基调，后面三个方案都围绕它做小修小补。',o:['B03','B11','B15','B01'],e:'首个方案锚定了讨论范围，其他选项没有被独立展开。'},
+  {b:'B04',d:1,s:'你花 4800 元办了年卡，只去了 3 次，但想到“钱都花了”还是继续挤时间去。',o:['B04','B10','B15','B05'],e:'已支付的钱收不回来，继续去应该只看未来的收益与成本。'},
+  {b:'B04',d:2,s:'项目投入 8 个月，方向已被验证不对，但团队说“都做这么久了”继续加码。',o:['B04','B01','B13','B05'],e:'用已投入的时间为继续辩护，而不是看未来边际收益。'},
+  {b:'B04',d:1,s:'电影很难看，你因为票已经买了，坚持看完才走。',o:['B04','B10','B15','B06'],e:'票钱是沉没成本；接下来的两小时才是可选择的成本。'},
+  {b:'B04',d:2,s:'一段关系多年不合适，你觉得“付出太多”，于是一直不分手。',o:['B04','B10','B15','B05'],e:'过去的投入不应成为未来选择的唯一理由。'},
+  {b:'B05',d:1,s:'你估计任务 3 天完成，结果做了 3 周，期间不断发现“还有一件事”。',o:['B05','B06','B03','B15'],e:'对用时和未知工作量的估计过于乐观。'},
+  {b:'B05',d:1,s:'你觉得自己开车很稳，事故不会发生在自己身上，于是偶尔看手机。',o:['B05','B02','B16','B10'],e:'高估自己对风险的控制力，低估随机事件。'},
+  {b:'B05',d:2,s:'你把大部分资金押在一只股票上，因为“研究得很透”。',o:['B05','B01','B03','B10'],e:'研究深度不等于预测准确率，集中持仓放大了判断错误。'},
+  {b:'B05',d:1,s:'考前你觉得“都会了”，成绩出来才发现多个知识点只是眼熟。',o:['B05','B06','B03','B12'],e:'熟悉感被误当成掌握程度。'},
+  {b:'B06',d:1,s:'球队输了，你说“早就知道该换人”，但赛前你并没有这样判断。',o:['B06','B05','B01','B12'],e:'用结果反推“当时就知道”，低估了赛前的不确定性。'},
+  {b:'B06',d:2,s:'股票大跌后，你说“当时明显有泡沫”，但当时你还在加仓。',o:['B06','B05','B02','B14'],e:'事后把模糊信号说成必然结论。'},
+  {b:'B06',d:2,s:'项目失败后，复盘认为“一开始就不可能成”，却忽略了当时的关键信息。',o:['B06','B05','B08','B13'],e:'用最终结果重写当时的判断，而不是还原当时的信息。'},
+  {b:'B06',d:1,s:'朋友分手，你说“我早看出他们不合适”，其实之前你一直看好。',o:['B06','B08','B12','B01'],e:'结果已知后，记忆被重新组织成“早就知道”。'},
+  {b:'B07',d:2,s:'候选人名校毕业，你默认他能力强，没细看项目经历与岗位匹配度。',o:['B07','B12','B08','B13'],e:'用“像不像优秀的人”代替了对能力的实际评估。'},
+  {b:'B07',d:2,s:'一家公司连续 5 年增长，你据此认为未来也会增长，没看行业周期。',o:['B07','B13','B14','B05'],e:'把过去的形态外推成未来，忽略了基准率与周期。'},
+  {b:'B07',d:2,s:'一个人说话温和，你认为他一定适合做管理，没看过往业绩。',o:['B07','B08','B12','B11'],e:'用单一特征“像管理者”替代了多维度证据。'},
+  {b:'B07',d:1,s:'产品包装朴素，你下意识觉得质量差；包装精致，就觉得更高级。',o:['B07','B12','B03','B09'],e:'用外观的“代表性”推断质量，而不是看参数与口碑。'},
+  {b:'B08',d:1,s:'同事迟到，你觉得他懒散，没考虑他刚送完孩子、路上又堵车。',o:['B08','B11','B12','B07'],e:'高估性格因素，低估情境约束。'},
+  {b:'B08',d:1,s:'外卖送慢了，你觉得骑手不负责，没想到暴雨和商家出餐慢。',o:['B08','B11','B14','B16'],e:'把结果归因于个人品质，而不是系统与情境。'},
+  {b:'B08',d:2,s:'孩子成绩差，你第一反应是“不努力”，没检查教学方法与睡眠。',o:['B08','B07','B12','B06'],e:'用性格/态度解释复杂结果，忽略环境因素。'},
+  {b:'B09',d:2,s:'医生说“手术成功率 90%”，你很快同意；若说“失败率 10%”，你会犹豫。',o:['B09','B03','B10','B16'],e:'同一信息换一种表述，风险感受就变了。'},
+  {b:'B09',d:1,s:'“立省 200 元”让你觉得划算；“打 8 折”让你觉得没那么大吸引力。',o:['B09','B03','B10','B15'],e:'节省金额与折扣比例是两种框架，影响了你的判断。'},
+  {b:'B09',d:2,s:'公司说“裁员 10%”员工很恐慌；说“保留 90%”接受度明显更高。',o:['B09','B11','B03','B16'],e:'损失框架比收益框架更能抓住注意力。'},
+  {b:'B09',d:2,s:'你更愿意选“成功率 95%”的方案，却没注意它的失败代价远高于另一个方案。',o:['B09','B10','B16','B05'],e:'成功率表述掩盖了失败时的后果大小。'},
+  {b:'B10',d:2,s:'股票亏了 20%，你拒绝卖出，想“等回本再说”，尽管基本面已变。',o:['B10','B04','B05','B15'],e:'为了避免确认损失，你继续持有，而不是看未来期望值。'},
+  {b:'B10',d:1,s:'免费试用快到期，你怕失去已经获得的优惠，于是续费了并不常用的服务。',o:['B10','B15','B04','B03'],e:'对“失去已有东西”的痛感，超过了对实际需求的判断。'},
+  {b:'B10',d:1,s:'家里堆着很多不用的东西，你舍不得扔，觉得“以后可能用得上”。',o:['B10','B04','B15','B16'],e:'对失去物品的厌恶，让你忽略了占用的空间与注意力。'},
+  {b:'B10',d:2,s:'一个机会有 70% 概率赚 100 元，但可能先亏 50 元，你选择完全不参与。',o:['B10','B16','B15','B05'],e:'对亏损的厌恶压过了正的期望值。'},
+  {b:'B11',d:2,s:'会上大家都说“同意”，你其实有疑问，但不想显得不合群，就没说。',o:['B11','B01','B08','B12'],e:'为了维持群体一致而压制异议，是从众/群体思维。'},
+  {b:'B11',d:2,s:'团队选方案，没人提反对意见，你默认“应该没问题”，也没做红队。',o:['B11','B01','B05','B15'],e:'没有异议不等于没有风险，可能只是没人敢说。'},
+  {b:'B11',d:1,s:'群里都在转发一条消息，你也跟着转，没核实来源。',o:['B11','B02','B01','B13'],e:'看到大家都做，就降低了核实标准。'},
+  {b:'B11',d:2,s:'同事都在加班，你明明完成了工作，也不好意思先走。',o:['B11','B15','B08','B12'],e:'群体行为成了你判断“应该怎么做”的依据。'},
+  {b:'B12',d:1,s:'明星代言一款产品，你觉得“他这么成功，产品应该不错”。',o:['B12','B07','B11','B09'],e:'把明星的光环迁移到了产品质量上。'},
+  {b:'B12',d:2,s:'名校教授推荐一种方法，你默认它一定科学，没看证据等级。',o:['B12','B05','B01','B11'],e:'头衔是光环，不等于这个方法有高质量证据。'},
+  {b:'B12',d:1,s:'一个人外形出众，你下意识觉得他能力也强、性格也好。',o:['B12','B07','B08','B06'],e:'一个突出优点影响了对其他维度的评价。'},
+  {b:'B13',d:2,s:'你研究成功创业者，总结他们的共同点，却没研究同样做法的失败者。',o:['B13','B07','B14','B06'],e:'只看到幸存者，没看到分母，结论可能完全相反。'},
+  {b:'B13',d:2,s:'你看到坚持下来的人都成功了，于是认为“坚持就会成功”。',o:['B13','B04','B06','B14'],e:'放弃的人不在样本里，坚持的成功率被高估。'},
+  {b:'B13',d:2,s:'你只看基金近 3 年收益，忽略了同期清盘、合并的基金。',o:['B13','B07','B14','B03'],e:'清盘的基金从视野里消失了，收益分布被美化。'},
+  {b:'B13',d:2,s:'你看到离婚后过得更好的人，就认为“离婚会让人更幸福”，没看没离的人。',o:['B13','B06','B01','B12'],e:'只看到愿意分享的幸存者，忽略了沉默的样本。'},
+  {b:'B14',d:1,s:'吃了某种保健品后精神变好，你认为一定是保健品起效，没考虑睡眠和饮食。',o:['B14','B02','B06','B13'],e:'时间先后与主观感受被当成了因果关系。'},
+  {b:'B14',d:1,s:'换了头像后运气变好，你觉得头像带来了好运。',o:['B14','B06','B02','B16'],e:'把巧合当成因果，没有排除其他变量。'},
+  {b:'B14',d:2,s:'公司业绩上升，你认为全是新 CEO 的功劳，没看行业复苏与汇率。',o:['B14','B06','B12','B13'],e:'忽略了共同原因，把结果归给最显眼的人。'},
+  {b:'B15',d:2,s:'现有流程明显低效，但你觉得“一直这样”，懒得改。',o:['B15','B04','B11','B16'],e:'维持现状被当成零成本，改变的收益被低估。'},
+  {b:'B15',d:2,s:'你想换工作，但想到要改简历、面试，就一直拖着。',o:['B15','B04','B10','B05'],e:'现状的熟悉感压过了改变可能带来的收益。'},
+  {b:'B15',d:1,s:'手机套餐早就不合适，但你一直没换，因为“换套餐太麻烦”。',o:['B15','B04','B10','B03'],e:'把切换成本放大，把长期损失缩小。'},
+  {b:'B16',d:2,s:'你坚持买“零添加”食品，认为只要没有添加剂就一定更安全。',o:['B16','B02','B10','B12'],e:'追求零风险，忽略了剂量、微生物风险与成本。'},
+  {b:'B16',d:2,s:'为了绝对安全，你不让孩子参加任何户外活动，忽略了缺乏运动的风险。',o:['B16','B10','B05','B15'],e:'消除一种风险的同时，制造了另一种被忽略的风险。'},
+  {b:'B16',d:1,s:'投资只买“保本”产品，接受很低的收益，也不考虑通胀。',o:['B16','B10','B15','B05'],e:'对绝对不亏的追求，掩盖了购买力下降的风险。'},
+  {b:'B16',d:2,s:'为了避免过敏，你完全不让孩子吃任何坚果，没咨询医生做分级引入。',o:['B16','B10','B15','B05'],e:'把“零暴露”当成最优，忽略了医学上的分级方案。'}
+];
+
+const CASES = [
+  {
+    id:'c1',title:'要不要砍掉已投入 8 个月的产品线',domain:'商业决策',diff:'L2',biases:['B04','B13','B01'],
+    summary:'一家 120 人的硬件公司，产品已投入 8 个月，预售 200 台、退货率 18%，竞品降价 20%。继续还是止损？',
+    background:'公司现金流只够 9 个月，这条产品线占用了 3 名核心工程师。预售看起来不错，但退货率偏高，退货原因尚未系统访谈。竞品刚刚降价 20%，销售团队担心窗口正在关闭。',
+    decision:{q:'如果你是负责人，会怎么选？',options:['继续投入 3 个月，争取首批交付','立即停止，团队转向已有盈利产品','缩减为维护版，只服务已预售用户']},
+    blocks:[
+      '退货访谈显示，用户退货的主因是软件稳定性，不是价格；而软件问题至少还要 2 个月才能修完。',
+      '3 名核心工程师中有 1 人已提出离职；如果继续，招聘与交接会再占用 1 个月。',
+      '已有盈利产品下季度有两个大单窗口；继续这条产品线需要再压 4 个月现金。'
+    ],
+    outcome:'管理层最终选择“缩减为维护版”。6 个月后维护版口碑稳定，但错过了盈利产品的大单窗口；同期竞品拿下了两个关键客户。',
+    review:'这个案例同时命中沉没成本（已投入 8 个月）、幸存者偏差（只看预售成功，没看退货样本）和确认偏误（只收集支持继续的信息）。结果好坏不等于决策好坏：缩减维护版控制了现金风险，但错过了窗口，是另一种代价。',
+    transfer:'你最近一次因为“已经投入很多”而继续的项目是什么？如果今天从零开始，你还会启动它吗？'
+  },
+  {
+    id:'c2',title:'城市该不该收拥堵费',domain:'公共事件',diff:'L2',biases:['B02','B09','B11'],
+    summary:'某城市考虑在核心区收拥堵费。支持者说能减少 20% 车流，反对者说会伤及小商户。你如何判断？',
+    background:'核心区早晚高峰拥堵严重，公交分担率 38%。方案是工作日 7:00–19:00 对进入核心区的车辆收费，收入用于公交改造。支持与反对双方都拿出了“成功城市”的案例。',
+    decision:{q:'你倾向于哪种判断？',options:['支持收费，拥堵必须用价格调节','反对收费，会加重小商户与通勤者负担','先做 6 个月试点，设明确评估指标再决定']},
+    blocks:[
+      '支持者引用的三个成功城市，公交分担率都在 55% 以上；本市只有 38%，替代出行不足。',
+      '反对者引用的小商户数据来自一个未同行评议的问卷，样本 42 家，且集中在收费区边缘。',
+      '市交通研究院的模型显示：收费能减少 12%–18% 车流，但若公交运力不先提升，周边道路会新增 6% 绕行流量。'
+    ],
+    outcome:'市政府选择先做 6 个月试点，同时增加 3 条公交快线；试点期车流下降 11%，周边绕行增加 4%，小商户营收没有显著变化。',
+    review:'支持者与反对者都在用“容易想起的成功/失败案例”（可得性），并用“减少 20%”或“商户倒闭”的框架放大某一面（框架效应）。群体里没人愿意先质疑本阵营的数据（群体思维）。',
+    transfer:'你最近一次在公共讨论中，只引用支持自己立场的案例吗？'
+  },
+  {
+    id:'c3',title:'早期临床试验的“显著效果”',domain:'科研医学',diff:'L3',biases:['B07','B13','B14'],
+    summary:'一项 30 人的早期试验显示，新药组比对照组多改善 15%，媒体称“重大突破”。你会怎么解读？',
+    background:'试验是单中心、开放标签、30 人，主要终点是安全性，疗效是次要终点。改善 15% 的 p 值为 0.04，但置信区间很宽。对照组中有 2 人因副作用退出。',
+    decision:{q:'你会如何判断这条消息？',options:['效果显著，值得尽快推广','样本太小，只能作为进一步研究线索','完全不可信，早期试验没有价值']},
+    blocks:[
+      '主要终点是安全性，疗效属于次要终点；论文没有对多重比较做校正。',
+      '30 人中新药组 18 人、对照组 12 人；两组基线严重程度不完全一致。',
+      '同类药物在过去 5 年有 4 项二期失败，其中 3 项早期数据也“看起来不错”。'
+    ],
+    outcome:'6 个月后，二期试验扩大到 240 人，疗效差异缩小到 4%，未达到主要终点。媒体不再报道。',
+    review:'媒体用“像不像突破”的叙事替代了样本量与证据等级（代表性），只报道成功的早期数据，忽略同类失败（幸存者偏差），并把“用药后改善”直接当成因果（因果错觉）。',
+    transfer:'你最近一次看到“显著效果”的新闻，有没有先看样本量与终点？'
+  },
+  {
+    id:'c4',title:'亏损 30% 后要不要加仓',domain:'投资理财',diff:'L2',biases:['B03','B04','B10'],
+    summary:'你以 100 元买入一只股票，现价 70 元。基本面没有明显恶化，但行业增速放缓。要不要加仓摊薄成本？',
+    background:'你最初的理由是“行业龙头、长期增长”。现在行业增速从 25% 降到 8%，公司份额稳定，但估值仍高于同业。你已经亏损 30%，不想“割在最低点”。',
+    decision:{q:'你会怎么做？',options:['加仓摊薄成本，等反弹','持有不动，等基本面明朗','按新信息重估，若估值仍高就减仓']},
+    blocks:[
+      '同业估值中位数是 18 倍，公司是 26 倍；份额稳定，但没有新的增长曲线。',
+      '你的买入价 100 元来自一年前的乐观报告，报告假设的增速是 30%，现在已不成立。',
+      '如果今天没有持仓，以 70 元和新信息重新判断，你还会买吗？你的答案是“不确定”。'
+    ],
+    outcome:'你选择按新信息重估，减仓一半。3 个月后行业继续降温，股价跌到 55 元；你保留了部分仓位，也保留了现金。',
+    review:'买入价 100 元成了锚点（锚定），已投入的资金让你不愿止损（沉没成本），而“不想割在最低点”是对损失的厌恶（损失厌恶）。',
+    transfer:'你最近一次因为“等回本”而没有按新信息重估，是什么？'
+  },
+  {
+    id:'c5',title:'一次绩效判断中的归因错误',domain:'职场管理',diff:'L2',biases:['B08','B12','B06'],
+    summary:'下属这个季度交付延迟、错误变多。你准备给他打低绩效。问题真的出在他身上吗？',
+    background:'他过去两个季度表现稳定。这个季度公司换了新系统，他的团队有 2 人离职，他还临时接手了一个跨部门项目。你只看到他迟交和周报里的错误。',
+    decision:{q:'你会怎么处理？',options:['直接打低绩效，明确问题','先做一次归因访谈，区分能力、意愿与情境','再观察一个季度，不做任何反馈']},
+    blocks:[
+      '新系统上线后，团队平均交付周期增加了 40%，不只他一个人变慢。',
+      '他接手的跨部门项目没有减少原有指标，等于一个人背了两份目标。',
+      '他过去一年做过两次同类项目，交付质量都高于团队平均。'
+    ],
+    outcome:'你做了归因访谈，调整了他的目标优先级，并补了一名临时支持。下个季度交付恢复，但他提到“如果当时直接打低绩效，我可能就离职了”。',
+    review:'你最初把延迟归因于“他不努力”（基本归因错误），又因为过去的良好印象而忽略了这个季度的情境变化（光环效应）；事后复盘时，容易说“我早就觉得他状态不对”（后见之明）。',
+    transfer:'你最近一次把别人的结果归因于性格，而没有先看情境？'
+  },
+  {
+    id:'c6',title:'健身年卡还要不要续',domain:'日常生活',diff:'L1',biases:['B04','B15','B10'],
+    summary:'年卡 4800 元，去年只去了 3 次。销售说续费打 7 折，还送 4 节私教。你续不续？',
+    background:'你去年办卡时计划每周去 2 次，实际因为加班和通勤只去了 3 次。最近工作节奏没有明显变化，新健身房离家更远，但价格更便宜。',
+    decision:{q:'你会怎么选？',options:['续费，7 折很划算，不能再浪费','不续，先按次付费验证真实使用频率','续费但只买次卡，逼自己每周去']},
+    blocks:[
+      '过去 12 个月你只有 3 次到店记录；同期加班时长比前一年增加 20%。',
+      '按次付费单次 80 元；即使每周去 2 次，一年也只要 8320 元，但你实际只去了 3 次，总花费 240 元。',
+      '新健身房单程多 15 分钟；你过去放弃健身的主要原因是通勤，不是价格。'
+    ],
+    outcome:'你选择先按次付费，3 个月去了 5 次，确认“现在的节奏不适合年卡”，省下了 4000 多元。',
+    review:'“钱都花了”是沉没成本；“续费打 7 折”是锚定；不想承认去年白办卡，是损失厌恶；而“一直这样”让你没有重新评估。',
+    transfer:'你最近一次因为“已经买了/已经投入了”而继续的消费是什么？'
+  }
+];
+
+const TEMPLATES = [
+  {id:'t1',name:'通用决策',desc:'是否做某事、选 A 还是 B；预置收益、成本、风险、可逆性。'},
+  {id:'t2',name:'职业选择',desc:'跳槽、转岗、接 offer；预置能力增量、现金流、机会成本。'},
+  {id:'t3',name:'观点评估',desc:'一条新闻/主张是否可信；预置来源、样本、替代解释。'},
+  {id:'t4',name:'人际冲突',desc:'与同事/家人的分歧；预置双方利益、情境因素、归因检查。'},
+  {id:'t5',name:'项目复盘',desc:'项目成/败原因；预置目标对照、过程指标、运气因素。'},
+  {id:'t6',name:'内容选题',desc:'做不做某个选题/产品；预置目标读者、差异点、验证成本。'}
+];
+
+const CANVAS_STEPS = [
+  {n:1,key:'define',title:'定 · 定义问题',sub:'把模糊抱怨转成一句可回答的问题。',fields:[
+    {k:'problem',label:'问题陈述',type:'textarea',ph:'目前是【现状】，我希望达到【期望】，差距主要在【关键差距】，范围限定在【时间/对象/场景】。',req:true},
+    {k:'goal',label:'目标函数',type:'input',ph:'我最想优化的 1–2 个指标',req:true},
+    {k:'scope',label:'边界',type:'input',ph:'不做什么、涉及谁、时间范围',req:true},
+    {k:'success',label:'成功标准',type:'input',ph:'什么情况下算解决/可接受',req:true}
+  ]},
+  {n:2,key:'decompose',title:'拆 · 拆解要素',sub:'同层不重叠，关键变量能影响结论。',fields:[
+    {k:'tree',label:'问题树（3 层）',type:'textarea',ph:'问题\n├─ 子问题 A\n│  ├─ 变量 A1\n│  └─ 变量 A2\n└─ 子问题 B',req:true},
+    {k:'vars',label:'变量清单',type:'textarea',ph:'列出所有可能影响结论的变量，每行一个',req:true},
+    {k:'key',label:'关键变量 3 个',type:'input',ph:'最值得验证的 3 个变量',req:true}
+  ]},
+  {n:3,key:'assumptions',title:'挖 · 挖假设',sub:'把隐含前提摆到桌面上，标注证据等级。',fields:[
+    {k:'list',label:'假设列表',type:'textarea',ph:'每行一条：假设 / 类型（事实·因果·价值）/ 证据等级 A–D',req:true},
+    {k:'risk',label:'最危险假设',type:'input',ph:'如果这条不成立，结论会翻转',req:true},
+    {k:'test',label:'如何验证',type:'textarea',ph:'最小成本的验证动作、找谁、看什么数据',req:true}
+  ]},
+  {n:4,key:'scan',title:'扫 · 扫偏差',sub:'至少写一条可检验的反证，而不是“注意一下”。',fields:[
+    {k:'bias',label:'命中的偏差',type:'bias',ph:'',req:true},
+    {k:'counter',label:'反证',type:'textarea',ph:'什么证据/事实能推翻我现在的判断？',req:true},
+    {k:'fix',label:'校正动作',type:'textarea',ph:'下一步具体做什么来降低这个偏差的影响',req:true}
+  ]},
+  {n:5,key:'diverge',title:'推 · 多路径推演',sub:'至少 3 个方案/解释，再做一次事前验尸。',fields:[
+    {k:'a',label:'方案 A',type:'textarea',ph:'做法、前提、预期结果',req:true},
+    {k:'b',label:'方案 B',type:'textarea',ph:'做法、前提、预期结果',req:true},
+    {k:'c',label:'方案 C',type:'textarea',ph:'做法、前提、预期结果',req:true},
+    {k:'premortem',label:'事前验尸',type:'textarea',ph:'假设 6 个月后失败了，最可能的 3 个原因',req:true}
+  ]},
+  {n:6,key:'decide',title:'决 · 决策与表达',sub:'结论明确，含置信度与复审触发条件。',fields:[
+    {k:'criteria',label:'标准与权重',type:'textarea',ph:'收益 40% / 成本 25% / 风险 20% / 可逆性 15%',req:true},
+    {k:'choice',label:'结论',type:'textarea',ph:'我选择……，因为……',req:true},
+    {k:'confidence',label:'置信度（50–100）',type:'input',ph:'例如 70',req:true},
+    {k:'review',label:'复审触发条件',type:'input',ph:'什么时间/什么信号出现时重新评估',req:true}
+  ]},
+  {n:7,key:'debrief',title:'盘 · 复盘校准',sub:'记录预测，到期对照，归因到信息/推理/执行/运气。',fields:[
+    {k:'prediction',label:'可证伪预测',type:'textarea',ph:'我预测在【时间】会出现【可观察结果】，概率【X%】',req:true},
+    {k:'outcome',label:'实际结果',type:'textarea',ph:'到期后填写；没到期可先留空',req:false},
+    {k:'attribution',label:'归因',type:'textarea',ph:'信息不足 / 推理错误 / 执行问题 / 运气',req:false},
+    {k:'rule',label:'下次规则',type:'textarea',ph:'下次遇到类似情况，我会……',req:false}
+  ]}
+];
+
+/* ============================================================
+   App logic · 明理 ClearLogic 离线 HTML 版
+   ============================================================ */
+
+const KEY = 'mingli.html.v1';
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
+const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+const pad = (n) => String(n).padStart(2, '0');
+
+function dayKey(d = new Date()){
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+}
+function dateLabel(d = new Date()){
+  return new Intl.DateTimeFormat('zh-CN', {month:'long', day:'numeric', weekday:'long'}).format(d);
+}
+function timeLabel(ts){
+  const d = new Date(ts);
+  return pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+function shuffle(a){
+  const r = a.slice();
+  for(let i = r.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [r[i], r[j]] = [r[j], r[i]];
+  }
+  return r;
+}
+function pct(n){ return Math.round(n * 100); }
+
+Q.forEach((q, i) => { q.id = 'q' + (i + 1); });
+const B = Object.fromEntries(BIASES.map(b => [b.c, b]));
+const QMAP = Object.fromEntries(Q.map(q => [q.id, q]));
+
+const ICONS = {
+  today: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  train: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/>',
+  cases: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/>',
+  canvas: '<path d="m12 2 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5"/><path d="m3 17 9 5 9-5"/>',
+  review: '<path d="M3 3v18h18"/><path d="m7 14 3-3 3 2 4-5"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
+  settings: '<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="#fff"/><circle cx="15" cy="12" r="2" fill="#fff"/><circle cx="8" cy="18" r="2" fill="#fff"/>',
+  arrow: '<path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>',
+  back: '<path d="m15 18-6-6 6-6"/>',
+  check: '<path d="m5 12 4 4L19 6"/>',
+  x: '<path d="M6 6l12 12M18 6 6 18"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  play: '<path d="M8 5v14l11-7z"/>',
+  download: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
+  upload: '<path d="M12 21V9"/><path d="m7 14 5-5 5 5"/><path d="M5 3h14"/>',
+  trash: '<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 15h10l1-15"/><path d="M10 11v6M14 11v6"/>',
+  book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  spark: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/>',
+  lock: '<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
+  fire: '<path d="M12 2s5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 1 0 2-1 1-4 0-2 -2-5 -2-5Z"/>',
+  target: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>',
+  layers: '<path d="m12 3 8 4.5-8 4.5-8-4.5L12 3Z"/><path d="m4 12 8 4.5 8-4.5"/><path d="m4 16.5 8 4.5 8-4.5"/>',
+  chart: '<path d="M4 20V10M10 20V4M16 20v-6M22 20H2"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+  save: '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8M7 3v5h8"/>'
+};
+function icon(name, cls = ''){
+  return '<svg class="' + cls + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICONS[name] || ICONS.info) + '</svg>';
+}
+
+/* ================= state ================= */
+function blankState(){
+  return {
+    version: 1,
+    profile: {nickname:'', goal:10, onboarded:false, createdAt:null, days:[]},
+    settings: {scale:1},
+    attempts: [],
+    plan: null,
+    session: null,
+    lastResult: null,
+    caseSessions: {},
+    canvases: []
+  };
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(!raw) return blankState();
+    const d = JSON.parse(raw);
+    const s = Object.assign(blankState(), d);
+    s.profile = Object.assign(blankState().profile, d.profile || {});
+    s.profile.days = Array.isArray(s.profile.days) ? s.profile.days : [];
+    s.settings = Object.assign(blankState().settings, d.settings || {});
+    s.attempts = Array.isArray(d.attempts) ? d.attempts : [];
+    s.canvases = Array.isArray(d.canvases) ? d.canvases : [];
+    s.caseSessions = d.caseSessions && typeof d.caseSessions === 'object' ? d.caseSessions : {};
+    return s;
+  }catch(e){
+    storageOK = false;
+    return blankState();
+  }
+}
+let storageOK = true;
+let storageWarned = false;
+let state = loadState();
+let ui = {trainingTab:'plan', onboardGoal:10, lastHash:''};
+
+let saveTimer = null;
+function save(){
+  try{
+    localStorage.setItem(KEY, JSON.stringify(state));
+  }catch(e){
+    storageOK = false;
+    if(!storageWarned){
+      storageWarned = true;
+      toast('浏览器禁止本地存储，刷新会丢数据；请用 Chrome/Edge 打开');
+    }
+  }
+}
+function scheduleSave(){
+  const badge = $('#saveBadge');
+  if(badge) badge.textContent = '保存中…';
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    save();
+    const b = $('#saveBadge');
+    if(b){ b.textContent = '已保存 ' + timeLabel(Date.now()); b.classList.add('ok'); }
+  }, 420);
+}
+
+/* ================= stats ================= */
+function statFor(code){
+  const a = state.attempts.filter(x => x.b === code);
+  const c = a.filter(x => x.correct).length;
+  return {n:a.length, correct:c, acc:a.length ? c / a.length : 0};
+}
+function totalStats(){
+  const n = state.attempts.length;
+  const c = state.attempts.filter(x => x.correct).length;
+  const brier = n ? state.attempts.reduce((s, a) => s + Math.pow((a.confidence || .7) - (a.correct ? 1 : 0), 2), 0) / n : 0;
+  const conf = n ? state.attempts.reduce((s, a) => s + (a.confidence || .7), 0) / n : 0;
+  return {n, correct:c, acc:n ? c / n : 0, brier, conf};
+}
+function topWeak(n = 3){
+  return BIASES.map(b => Object.assign({}, b, statFor(b.c)))
+    .filter(x => x.n > 0)
+    .sort((a, b) => a.acc - b.acc || b.n - a.n)
+    .slice(0, n);
+}
+function streak(){
+  const days = state.profile.days || [];
+  let n = 0;
+  const d = new Date();
+  for(let i = 0; i < 366; i++){
+    const k = dayKey(d);
+    if(days.includes(k)){ n++; d.setDate(d.getDate() - 1); }
+    else if(i === 0){ d.setDate(d.getDate() - 1); }
+    else break;
+  }
+  return n;
+}
+function weekProgress(){
+  let n = 0;
+  for(let i = 0; i < 7; i++){
+    const d = new Date(); d.setDate(d.getDate() - i);
+    if((state.profile.days || []).includes(dayKey(d))) n++;
+  }
+  return {days:n, pct:clamp(n / 5 * 100, 0, 100)};
+}
+function todayAttempts(){
+  const k = dayKey();
+  return state.attempts.filter(a => a.date === k);
+}
+function ensurePlan(){
+  const k = dayKey();
+  const bad = state.plan && (!Array.isArray(state.plan.ids) || !state.plan.ids.length || state.plan.ids.some(id => !QMAP[id]));
+  if(!state.plan || state.plan.date !== k || bad){
+    const goal = clamp(Number(state.profile.goal) || 10, 5, 15);
+    state.plan = {date:k, ids:pickDaily(goal).map(q => q.id), done:false};
+    save();
+  }
+  return state.plan;
+}
+function pickDaily(n){
+  const weak = BIASES.map(b => Object.assign({}, b, statFor(b.c)))
+    .sort((a, b) => a.acc - b.acc || Math.random() - .5);
+  const out = [];
+  const used = new Set();
+  for(const b of weak){
+    if(out.length >= Math.min(n, 8)) break;
+    const pool = Q.filter(q => q.b === b.c);
+    const q = pool[Math.floor(Math.random() * pool.length)];
+    if(q && !used.has(q.id)){ out.push(q); used.add(q.id); }
+  }
+  const rest = shuffle(Q.filter(q => !used.has(q.id)));
+  while(out.length < n && rest.length) out.push(rest.pop());
+  return out.slice(0, n);
+}
+function pickBias(code, n = 5){
+  return shuffle(Q.filter(q => q.b === code)).slice(0, n);
+}
+function recommendCase(){
+  const done = id => state.caseSessions[id] && state.caseSessions[id].completed;
+  const weak = topWeak(3).map(w => w.c);
+  const match = CASES.find(c => !done(c.id) && c.biases.some(b => weak.includes(b)));
+  return match || CASES.find(c => !done(c.id)) || CASES[0];
+}
+function weekly(){
+  const days = [];
+  for(let i = 6; i >= 0; i--){
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const k = dayKey(d);
+    const a = state.attempts.filter(x => x.date === k);
+    days.push({
+      key:k,
+      label:['日','一','二','三','四','五','六'][d.getDay()],
+      n:a.length,
+      correct:a.filter(x => x.correct).length
+    });
+  }
+  return days;
+}
+function calibBins(){
+  const bins = [50,60,70,80,90].map(v => ({lo:v, hi:v + 9, n:0, correct:0, conf:0}));
+  state.attempts.forEach(a => {
+    const c = Math.round((a.confidence || .7) * 100);
+    const b = bins.find(x => c >= x.lo && c <= x.hi) || bins[4];
+    b.n++; b.correct += a.correct ? 1 : 0; b.conf += c;
+  });
+  return bins.map(b => ({label:b.lo + '–' + b.hi, n:b.n, pred:b.n ? b.conf / b.n / 100 : 0, actual:b.n ? b.correct / b.n : 0}));
+}
+
+/* ================= session ================= */
+function startSession(ids, mode){
+  ids = (ids || []).filter(id => QMAP[id]);
+  if(!ids.length){ toast('题目不足，请先导入内容'); return; }
+  const first = QMAP[ids[0]];
+  state.session = {
+    ids:ids.slice(), index:0, answers:[], startedAt:Date.now(), mode:mode || 'drill',
+    selected:null, confidence:70, feedback:null, opts:shuffle(first.o.slice())
+  };
+  save();
+  go('session');
+}
+function currentQ(){
+  const s = state.session;
+  if(!s) return null;
+  return QMAP[s.ids[s.index]] || null;
+}
+function startPlan(){
+  if(state.session && state.session.mode === 'daily'){ go('session'); return; }
+  ensurePlan();
+  startSession(state.plan.ids, 'daily');
+}
+function startDrill(code){
+  startSession(pickBias(code, 5).map(q => q.id), 'drill');
+}
+function submitAnswer(){
+  const s = state.session; const q = currentQ();
+  if(!s || !q || s.feedback) return;
+  if(!s.selected){ toast('先选一个选项'); return; }
+  const correct = s.selected === q.b;
+  const confidence = clamp(Number(s.confidence) || 70, 50, 100) / 100;
+  const rec = {qid:q.id, b:q.b, chosen:s.selected, correct, confidence, date:dayKey(), ts:Date.now()};
+  s.answers.push(rec);
+  state.attempts.push(rec);
+  if(state.attempts.length > 6000) state.attempts = state.attempts.slice(-5000);
+  s.feedback = {chosen:s.selected, correct};
+  save();
+  render();
+}
+function nextQuestion(){
+  const s = state.session;
+  if(!s) return;
+  if(s.index + 1 >= s.ids.length){ finishSession(); return; }
+  s.index++;
+  const q = currentQ();
+  s.selected = null;
+  s.confidence = 70;
+  s.feedback = null;
+  s.opts = shuffle(q.o.slice());
+  save();
+  render();
+}
+function finishSession(){
+  const s = state.session;
+  if(!s) return;
+  const n = s.answers.length;
+  const correct = s.answers.filter(a => a.correct).length;
+  const conf = n ? s.answers.reduce((x, a) => x + a.confidence, 0) / n : 0;
+  const brier = n ? s.answers.reduce((x, a) => x + Math.pow(a.confidence - (a.correct ? 1 : 0), 2), 0) / n : 0;
+  const day = dayKey();
+  if(!(state.profile.days || []).includes(day)) state.profile.days.push(day);
+  if(s.mode === 'daily' && state.plan) state.plan.done = true;
+  state.lastResult = {
+    total:n, correct, accuracy:n ? correct / n : 0, avgConf:conf, brier,
+    duration:Math.max(1, Math.round((Date.now() - s.startedAt) / 1000)),
+    answers:s.answers.slice(), mode:s.mode, finishedAt:Date.now()
+  };
+  state.session = null;
+  save();
+  go('result');
+}
+
+/* ================= cases ================= */
+function caseState(id){
+  if(!state.caseSessions[id]){
+    state.caseSessions[id] = {step:'decision', decision:null, updates:[], block:0, transfer:'', completed:false};
+    save();
+  }
+  const cs = state.caseSessions[id];
+  cs.step = cs.step || 'decision';
+  cs.updates = Array.isArray(cs.updates) ? cs.updates : [];
+  cs.block = Number(cs.block) || 0;
+  return cs;
+}
+function createCanvasFromCase(id){
+  const c = CASES.find(x => x.id === id);
+  if(!c) return;
+  const cs = caseState(id);
+  const choice = cs.decision ? c.decision.options[cs.decision.choice] : '';
+  const canvas = {
+    id:uid(), title:c.title, template:'案例拆解', status:'draft', step:1,
+    createdAt:Date.now(), updatedAt:Date.now(),
+    sourceCase:id,
+    data:{
+      1:{problem:c.title + '：' + c.decision.q, goal:'做出更优决策，而不是证明自己原本的判断', scope:'基于案例当时可得信息，不引入事后信息', success:'能说清选择、代价、置信度与复审条件'},
+      6:{choice, confidence:(cs.decision && cs.decision.confidence) || 70, criteria:'收益 / 成本 / 风险 / 可逆性', review:'3 个月后或关键信号出现时'}
+    }
+  };
+  state.canvases.unshift(canvas);
+  save();
+  go('canvas/' + canvas.id);
+}
+
+/* ================= canvas ================= */
+function getCanvas(id){
+  return state.canvases.find(c => c.id === id);
+}
+function currentCanvas(){
+  const r = parseHash();
+  return r.view === 'canvas' && r.id ? getCanvas(r.id) : null;
+}
+function canvasScore(c){
+  const cd = c.data || (c.data = {});
+  let total = 0, filled = 0;
+  CANVAS_STEPS.forEach(s => {
+    s.fields.forEach(f => {
+      if(!f.req) return;
+      total++;
+      const v = cd[s.n] && cd[s.n][f.k];
+      if(f.type === 'bias'){
+        if(Array.isArray(v) && v.length) filled++;
+      }else if(v && String(v).trim().length >= 2){
+        filled++;
+      }
+    });
+  });
+  return {filled, total, score:total ? Math.round(filled / total * 12 * 10) / 10 : 0};
+}
+function canvasMissing(c){
+  const cd = c.data || (c.data = {});
+  const miss = [];
+  CANVAS_STEPS.forEach(s => {
+    s.fields.forEach(f => {
+      if(!f.req) return;
+      const v = cd[s.n] && cd[s.n][f.k];
+      const empty = f.type === 'bias' ? !(Array.isArray(v) && v.length) : !(v && String(v).trim().length >= 2);
+      if(empty) miss.push('第 ' + s.n + ' 步 · ' + f.label);
+    });
+  });
+  return miss;
+}
+function newCanvas(template, title){
+  const c = {
+    id:uid(), title:title || (template || '未命名拆解'), template:template || '通用决策',
+    status:'draft', step:1, createdAt:Date.now(), updatedAt:Date.now(), data:{}
+  };
+  state.canvases.unshift(c);
+  save();
+  go('canvas/' + c.id);
+}
+
+/* ================= data io ================= */
+function exportData(){
+  const payload = {
+    app:'mingli-clearLogic', version:1, exportedAt:new Date().toISOString(),
+    state
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'mingli-backup-' + dayKey().replace(/-/g, '') + '-' + timeLabel(Date.now()).replace(':', '') + '.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast('备份已导出');
+}
+async function importData(file){
+  try{
+    const text = typeof file.text === 'function'
+      ? await file.text()
+      : await new Promise((resolve, reject) => {
+          const r = new FileReader();
+          r.onload = () => resolve(r.result);
+          r.onerror = () => reject(r.error);
+          r.readAsText(file);
+        });
+    const payload = JSON.parse(text);
+    const incoming = payload.state || payload;
+    if(!incoming || !incoming.profile || !Array.isArray(incoming.attempts)){
+      throw new Error('格式不符');
+    }
+    if(!confirm('导入会覆盖当前全部数据。建议先导出当前数据。继续？')) return;
+    state = Object.assign(blankState(), incoming);
+    state.profile = Object.assign(blankState().profile, incoming.profile || {});
+    state.profile.days = Array.isArray(state.profile.days) ? state.profile.days : [];
+    state.settings = Object.assign(blankState().settings, incoming.settings || {});
+    state.attempts = Array.isArray(state.attempts) ? state.attempts : [];
+    state.canvases = Array.isArray(state.canvases) ? state.canvases : [];
+    state.caseSessions = state.caseSessions && typeof state.caseSessions === 'object' ? state.caseSessions : {};
+    save();
+    go('today');
+    render();
+    toast('导入完成');
+  }catch(e){
+    toast('导入失败：JSON 格式不正确');
+  }
+}
+function clearAll(){
+  if(!confirm('确定清空全部本地数据？此操作不可恢复。')) return;
+  if(!confirm('再次确认：训练记录、案例进度、拆解画布都会被删除。')) return;
+  localStorage.removeItem(KEY);
+  state = blankState();
+  ui.lastHash = '';
+  go('today');
+  render();
+  toast('已清空');
+}
+
+/* ================= router ================= */
+function parseHash(){
+  const h = location.hash.replace(/^#\/?/, '');
+  const p = h.split('/').filter(Boolean);
+  return {view:p[0] || 'today', id:p[1] || null, sub:p[2] || null};
+}
+function go(path){
+  const h = '#/' + path;
+  if(location.hash === h) render();
+  else location.hash = h;
+}
+
+/* ================= shell ================= */
+const NAV = [
+  {to:'today', label:'今日', icon:'today'},
+  {to:'training', label:'训练', icon:'train'},
+  {to:'cases', label:'案例', icon:'cases'},
+  {to:'canvas', label:'拆解', icon:'canvas'},
+  {to:'review', label:'复盘', icon:'review'},
+  {to:'profile', label:'我的', icon:'user'}
+];
+const TITLES = {today:'今日', training:'训练', cases:'案例', canvas:'拆解', review:'复盘', profile:'我的', data:'数据与备份', session:'训练中', result:'训练结果'};
+
+function shell(html, active){
+  const p = state.profile;
+  const name = p.nickname || '学习者';
+  const plan = ensurePlan();
+  const done = plan.done ? plan.ids.length : todayAttempts().length;
+  const goal = plan.ids.length;
+  const st = streak();
+  const wp = weekProgress();
+  const navHtml = NAV.map(n => `<button class="nav-item ${active === n.to ? 'active' : ''}" data-act="nav" data-to="${n.to}">${icon(n.icon)}<span>${n.label}</span>${n.to === 'training' && !plan.done ? '<span class="mini">' + Math.max(0, goal - done) + '</span>' : ''}</button>`).join('');
+  const bottomHtml = NAV.slice(0, 5).map(n => `<button class="${active === n.to ? 'active' : ''}" data-act="nav" data-to="${n.to}">${icon(n.icon)}<span>${n.label}</span></button>`).join('');
+  return `
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo"><i></i><i></i><i></i></div>
+        <div><b>明理</b><small>ClearLogic</small></div>
+      </div>
+      <nav class="nav">${navHtml}</nav>
+      <div class="side-card">
+        <div class="row">
+          <div class="ring sm" style="--p:${wp.pct}"><div class="ring-in"><b>${wp.days}/5</b><span>本周</span></div></div>
+          <div style="flex:1">
+            <div class="k">今日进度</div>
+            <div class="v" style="margin-top:3px">${Math.min(done, goal)} / ${goal} 题</div>
+            <div class="progress thin" style="margin-top:8px"><i style="width:${clamp(done / Math.max(1, goal) * 100, 0, 100)}%"></i></div>
+          </div>
+        </div>
+        <div class="row" style="margin-top:14px;justify-content:space-between">
+          <div class="k">连续</div>
+          <div class="v">${st} 天</div>
+        </div>
+      </div>
+      <div class="side-foot"><b>离线单机</b> · 数据只存本机<br>不联网 · 不上传 · 可导出备份</div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div class="crumbs">明理 <span>/</span> <b>${TITLES[active] || '今日'}</b></div>
+        <div class="spacer"></div>
+        <div class="date">${dateLabel()}</div>
+        <button class="avatar" data-act="nav" data-to="profile" title="我的">${esc(name.slice(0, 1))}</button>
+      </header>
+      <div class="content">${storageOK ? '' : `<div class="card" style="border-color:#FFD6D2;background:#FFF6F5;margin-bottom:16px;padding:14px 16px"><b style="font-size:12.5px;color:#B3261E">本地存储不可用</b><p class="tiny" style="margin-top:4px">当前浏览器可能禁止了 file:// 的 localStorage。刷新会丢数据；请用 Chrome/Edge 打开，或把本文件放到本地服务器。</p></div>`}<div class="view">${html}</div></div>
+    </main>
+    <nav class="bottom-nav">${bottomHtml}</nav>
+  </div>`;
+}
+
+/* ================= onboarding ================= */
+function onboarding(){
+  const name = state.profile.nickname || '';
+  return `
+  <div class="onboard">
+    <div class="panel">
+      <div class="logo"><i></i><i></i><i></i></div>
+      <div class="kicker">PERSONAL · OFFLINE</div>
+      <h1>把问题拆到底层，<br><span class="grad-text">把判断练成习惯。</span></h1>
+      <p class="lead">每天 10–15 分钟，用真实情境训练 16 项认知偏差，再用七步法拆解一个真实问题。数据只存本机，不联网。</p>
+      <div class="points">
+        <div class="point"><span class="n">1</span><span><b>训练</b>　情境判断 + 置信度 + 即时反馈，建立偏差词汇。</span></div>
+        <div class="point"><span class="n">2</span><span><b>案例</b>　先判断后揭示，练习信息更新与复盘。</span></div>
+        <div class="point"><span class="n">3</span><span><b>拆解</b>　七步画布，把模糊问题变成可执行决策。</span></div>
+      </div>
+      <div class="field">
+        <label>怎么称呼你</label>
+        <input class="input" id="onboardName" maxlength="12" placeholder="例如：知远" value="${esc(name)}">
+      </div>
+      <div class="field">
+        <label>每天练几题</label>
+        <div class="segment" id="onboardGoal">
+          ${[5,10,15].map(n => `<button type="button" data-act="onboard-goal" data-goal="${n}" class="${ui.onboardGoal === n ? 'on' : ''}">${n} 题</button>`).join('')}
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary btn-lg" data-act="finish-onboard">${icon('play')} 开始训练</button>
+        <button class="btn btn-quiet btn-lg" data-act="finish-onboard" data-skip="1">先看看</button>
+      </div>
+      <p class="tiny" style="margin-top:14px">所有数据保存在浏览器 localStorage；卸载/清理浏览器数据前请用「导出备份」保存。</p>
+    </div>
+  </div>`;
+}
+
+/* ================= today ================= */
+function todayView(){
+  const plan = ensurePlan();
+  const done = plan.done ? plan.ids.length : todayAttempts().length;
+  const goal = plan.ids.length;
+  const st = streak();
+  const wp = weekProgress();
+  const weak = topWeak(3);
+  const c = recommendCase();
+  const canvas = state.canvases.slice().sort((a, b) => b.updatedAt - a.updatedAt)[0];
+  const total = totalStats();
+  const week = weekly();
+  const max = Math.max(1, ...week.map(d => d.n));
+  return `
+  <div class="today-hero">
+    <section class="card hero">
+      <div class="kicker">TODAY · 10–15 MIN</div>
+      <h1 class="h1">把问题拆到底层。</h1>
+      <p class="lead">先判断，再看答案；先拆解，再下结论。今天从 ${goal} 道情境题开始。</p>
+      <div class="hero-actions">
+        <button class="btn solid btn-lg" data-act="start-plan">${icon('play')} ${state.session && state.session.mode === 'daily' ? '继续今日训练' : (plan.done ? '再练一组' : '开始今日训练')}</button>
+        <button class="btn ghost" data-act="open-case" data-id="${c.id}">${icon('cases')} 看一个案例</button>
+      </div>
+    </section>
+    <section class="card streak-card">
+      <div class="ring" style="--p:${clamp(done / Math.max(1, goal) * 100, 0, 100)}"><div class="ring-in"><b>${Math.min(done, goal)}/${goal}</b><span>今日</span></div></div>
+      <div class="meta">
+        <b>${st} 天连续</b>
+        <span>${wp.days}/5 天 · 本周</span>
+        <span>${plan.done ? '今日已完成，去复盘' : '还剩 ' + Math.max(0, goal - done) + ' 题'}</span>
+      </div>
+    </section>
+  </div>
+
+  <div class="grid g3 section">
+    <div class="stat"><b>${total.n}</b><span>累计作答</span></div>
+    <div class="stat"><b>${total.n ? pct(total.acc) + '%' : '—'}</b><span>总体正确率</span></div>
+    <div class="stat"><b>${state.canvases.length}</b><span>拆解画布</span></div>
+  </div>
+
+  <div class="grid g2 section">
+    <section class="card">
+      <div class="between"><div><div class="kicker">WEAK SPOTS</div><h2 class="h3" style="margin-top:5px">最该补的 3 个偏差</h2></div><button class="btn btn-sm btn-ghost" data-act="nav" data-to="training">全部 ${icon('arrow')}</button></div>
+      <div class="weak-list" style="margin-top:18px">
+        ${weak.length ? weak.map(w => `<div class="weak-row"><div class="name">${esc(w.n)}</div><div class="track"><i style="width:${clamp(w.acc * 100, 4, 100)}%"></i></div><div class="val">${pct(w.acc)}%</div></div>`).join('') : `<div class="empty" style="padding:20px 0"><div class="art">${icon('target')}</div><h3>还没有偏差画像</h3><p>完成第一组训练后，这里会按正确率排出你的弱项。</p></div>`}
+      </div>
+    </section>
+    <section class="card">
+      <div class="between"><div><div class="kicker">CASE</div><h2 class="h3" style="margin-top:5px">推荐案例</h2></div><span class="chip gray">${esc(c.domain)} · ${esc(c.diff)}</span></div>
+      <div class="case-mini" style="margin-top:18px">
+        <div class="cover">${icon('cases')}</div>
+        <div><h3>${esc(c.title)}</h3><p>${esc(c.summary)}</p><button class="btn btn-sm btn-primary" style="margin-top:12px" data-act="open-case" data-id="${c.id}">进入案例 ${icon('arrow')}</button></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="grid g2 section">
+    <section class="card">
+      <div class="between"><div><div class="kicker">CANVAS</div><h2 class="h3" style="margin-top:5px">继续拆解</h2></div><button class="btn btn-sm btn-ghost" data-act="nav" data-to="canvas">${icon('plus')} 新建</button></div>
+      ${canvas ? `<div class="canvas-mini" style="margin-top:18px"><div class="step">第 ${canvas.step || 1} / 7 步 · ${esc(canvas.template || '通用决策')}</div><h3>${esc(canvas.title)}</h3><p class="tiny">上次编辑 ${timeLabel(canvas.updatedAt)}</p><button class="btn btn-sm btn-ghost" style="margin-top:12px" data-act="open-canvas" data-id="${canvas.id}">继续编辑 ${icon('arrow')}</button></div>` : `<div class="empty" style="padding:20px 0"><div class="art">${icon('canvas')}</div><h3>还没有画布</h3><p>把最近一个真实问题拆成七步，产出可执行结论。</p><button class="btn btn-sm btn-ghost" style="margin-top:12px" data-act="nav" data-to="canvas">开始第一张</button></div>`}
+    </section>
+    <section class="card">
+      <div class="between"><div><div class="kicker">THIS WEEK</div><h2 class="h3" style="margin-top:5px">7 天节奏</h2></div><span class="chip green">${wp.days}/5 天</span></div>
+      <div class="chart" style="height:120px;margin-top:12px">
+        ${week.map(d => `<div class="col"><div class="bar" style="height:${Math.max(4, d.n / max * 100)}%;opacity:${d.n ? 1 : .35}"></div><div class="cap">${d.label}</div></div>`).join('')}
+      </div>
+      <p class="tiny" style="margin-top:10px">柱高 = 当天作答数；灰色 = 未训练。</p>
+    </section>
+  </div>`;
+}
+
+/* ================= training ================= */
+function trainingView(){
+  const plan = ensurePlan();
+  const tab = ui.trainingTab;
+  const tabs = `<div class="tabs"><button class="tab ${tab === 'plan' ? 'active' : ''}" data-act="training-tab" data-tab="plan">今日计划</button><button class="tab ${tab === 'bias' ? 'active' : ''}" data-act="training-tab" data-tab="bias">专项训练</button><button class="tab ${tab === 'mistakes' ? 'active' : ''}" data-act="training-tab" data-tab="mistakes">错题本</button></div>`;
+  let body = '';
+  if(tab === 'plan'){
+    const done = plan.done ? plan.ids.length : todayAttempts().length;
+    body = `<div class="grid g2">
+      <section class="card">
+        <div class="kicker">TODAY PLAN</div>
+        <h2 class="h2" style="margin-top:6px">${plan.done ? '今日已完成' : '10 题，约 12 分钟'}</h2>
+        <p class="lead" style="margin-top:8px">${plan.done ? '去复盘看看今天的偏差命中与校准。' : '按你的弱项组卷：复习 + 新题 + 迁移 + 校准。'}</p>
+        <div class="progress" style="margin:18px 0"><i style="width:${clamp(done / Math.max(1, plan.ids.length) * 100, 0, 100)}%"></i></div>
+        <div class="between"><span class="tiny">${Math.min(done, plan.ids.length)} / ${plan.ids.length} 题</span><button class="btn btn-primary" data-act="start-plan">${icon('play')} ${plan.done ? '再练一组' : '开始训练'}</button></div>
+      </section>
+      <section class="card soft">
+        <div class="kicker">HOW IT WORKS</div>
+        <h3 class="h3" style="margin-top:6px">每次提交都会留下三样东西</h3>
+        <div class="stack" style="margin-top:14px">
+          <div class="row"><span class="chip">01</span><span class="tiny">选择 + 置信度：用于校准，不乘入得分</span></div>
+          <div class="row"><span class="chip">02</span><span class="tiny">偏差命中：更新 16 项偏差画像</span></div>
+          <div class="row"><span class="chip">03</span><span class="tiny">被忽略的信息 + 校正动作：用于迁移</span></div>
+        </div>
+      </section>
+    </div>
+    <section class="card section">
+      <div class="between"><div><div class="kicker">ALL BIASES</div><h2 class="h3" style="margin-top:5px">16 项偏差</h2></div><span class="tiny">点击任一偏差，做 5 题专项</span></div>
+      <div class="bias-grid" style="margin-top:16px">
+        ${BIASES.map((b, i) => { const s = statFor(b.c); return `<button class="bias-tile" data-act="drill" data-bias="${b.c}"><span class="idx">B${String(i + 1).padStart(2, '0')}</span><span class="body"><b>${esc(b.n)}</b><span>${esc(b.d)}</span></span><span class="mini-bar"><i style="width:${clamp(s.acc * 100, 3, 100)}%"></i></span></button>`; }).join('')}
+      </div>
+    </section>`;
+  }else if(tab === 'bias'){
+    body = `<section class="card">
+      <div class="between"><div><div class="kicker">BIAS MAP</div><h2 class="h2" style="margin-top:6px">偏差地图</h2><p class="lead" style="margin-top:6px">正确率不是掌握度；样本少于 3 题时先当“探索中”。</p></div><button class="btn btn-ghost" data-act="nav" data-to="review">${icon('chart')} 看校准</button></div>
+      <div class="stack" style="margin-top:20px">
+        ${BIASES.map((b, i) => { const s = statFor(b.c); return `<div class="weak-row" style="grid-template-columns:120px 1fr 92px"><div class="name">${esc(b.n)}</div><div class="track"><i style="width:${clamp(s.acc * 100, 2, 100)}%"></i></div><div class="val">${s.n ? pct(s.acc) + '% · ' + s.n + ' 题' : '未练'}</div></div>`; }).join('')}
+      </div>
+    </section>`;
+  }else{
+    const wrong = [];
+    const seen = new Set();
+    state.attempts.slice().reverse().forEach(a => {
+      if(a.correct || seen.has(a.qid)) return;
+      seen.add(a.qid); wrong.push(a);
+    });
+    body = `<section class="card">
+      <div class="between"><div><div class="kicker">MISTAKES</div><h2 class="h2" style="margin-top:6px">错题本</h2><p class="lead" style="margin-top:6px">最近答错的题；重做会开启 1 题专项。</p></div><span class="chip red">${wrong.length} 题</span></div>
+      <div style="margin-top:14px">
+        ${wrong.length ? wrong.slice(0, 30).map(a => { const q = QMAP[a.qid]; if(!q) return ''; return `<div class="mistake-row"><span class="badge">${esc(a.b.slice(1))}</span><div style="flex:1"><div class="row" style="justify-content:space-between"><b style="font-size:12.5px">${esc(B[q.b].n)}</b><button class="btn btn-sm btn-quiet" data-act="retry-mistake" data-qid="${q.id}">重做</button></div><p>${esc(q.s)}</p><p class="tiny" style="margin-top:4px">你选：${esc(B[a.chosen].n)} · 正确：${esc(B[q.b].n)}</p></div></div>`; }).join('') : `<div class="empty"><div class="art">${icon('check')}</div><h3>还没有错题</h3><p>完成训练后，答错的题会自动收在这里。</p></div>`}
+      </div>
+    </section>`;
+  }
+  return `<div class="between"><div><div class="kicker">TRAINING</div><h1 class="h1" style="margin-top:6px">训练</h1><p class="lead" style="margin-top:8px">16 项偏差 · 情境判断 · 置信度校准</p></div>${tabs}</div><div class="section">${body}</div>`;
+}
+
+/* ================= session view ================= */
+function sessionView(){
+  const s = state.session;
+  if(!s || !Array.isArray(s.ids) || !s.ids.length || !QMAP[s.ids[s.index]] || !Array.isArray(s.opts)){
+    if(s){ state.session = null; save(); }
+    return `<div class="empty"><div class="art">${icon('train')}</div><h3>没有进行中的训练</h3><p>从今日或训练大厅开始一组。</p><button class="btn btn-primary" data-act="nav" data-to="today">回今日</button></div>`;
+  }
+  const q = currentQ();
+  if(!q){ state.session = null; save(); return ''; }
+  const fb = s.feedback;
+  const progress = (s.index / s.ids.length) * 100;
+  const optHtml = s.opts.map((code, i) => {
+    let cls = '';
+    if(fb){
+      if(code === q.b) cls = 'correct';
+      else if(code === fb.chosen) cls = 'wrong';
+      else cls = 'dim';
+    }else if(s.selected === code) cls = 'selected';
+    return `<button class="option ${cls}" data-act="select-option" data-code="${code}" ${fb ? 'disabled' : ''}><span class="key">${String.fromCharCode(65 + i)}</span><span class="txt">${esc(B[code].n)}</span><span class="check">${icon('check')}</span></button>`;
+  }).join('');
+  const fbHtml = fb ? `<div class="feedback ${fb.correct ? 'good' : 'bad'}">
+    <div class="head"><span class="chip ${fb.correct ? 'green' : 'red'}">${fb.correct ? '判断正确' : '判断偏差'}</span><b>${esc(B[q.b].n)}</b></div>
+    <p>${esc(q.e)}</p>
+    <div class="label">被忽略的信息</div><div class="val">${esc(B[q.b].miss)}</div>
+    <div class="label">校正动作</div><div class="val">${esc(B[q.b].tip)}</div>
+    <div class="label">迁移</div><div class="val">${esc(B[q.b].tr)}</div>
+  </div>` : '';
+  return `<div class="session-wrap">
+    <div class="session-top"><span class="tiny mono">第 ${s.index + 1} / ${s.ids.length} 题</span><div class="progress"><i style="width:${progress}%"></i></div><button class="icon-btn" data-act="close-session" title="退出">${icon('x')}</button></div>
+    <section class="card session-card">
+      <div class="session-meta"><span class="chip">情境判断</span><span class="tiny">选最可能影响判断的偏差</span></div>
+      <p class="scenario">${esc(q.s)}</p>
+      <div class="options">${optHtml}</div>
+      ${fb ? '' : `<div class="confidence"><div class="top"><b>你的置信度</b><span id="confVal">${s.confidence}%</span></div><input type="range" min="50" max="100" step="10" value="${s.confidence}" data-session-conf aria-label="置信度"><div class="scale"><span>50%（猜）</span><span>100%（确定）</span></div></div>`}
+      ${fbHtml}
+      <div style="margin-top:20px">
+        ${fb ? `<button class="btn btn-primary btn-lg btn-block" data-act="next-question">${s.index + 1 >= s.ids.length ? '看结果' : '下一题'} ${icon('arrow')}</button>` : `<button class="btn btn-primary btn-lg btn-block" data-act="submit-answer">${icon('check')} 提交答案</button>`}
+      </div>
+    </section>
+    <p class="tiny" style="text-align:center;margin-top:12px">数据已本地保存 · 退出后可继续</p>
+  </div>`;
+}
+
+/* ================= result ================= */
+function resultView(){
+  const r = state.lastResult;
+  if(!r || !Array.isArray(r.answers)){
+    return `<div class="empty"><div class="art">${icon('chart')}</div><h3>还没有结果</h3><p>先完成一组训练。</p><button class="btn btn-primary" data-act="nav" data-to="today">回今日</button></div>`;
+  }
+  const acc = r.accuracy || 0;
+  const mm = Math.floor(r.duration / 60), ss = r.duration % 60;
+  const byBias = {};
+  r.answers.forEach(a => {
+    byBias[a.b] = byBias[a.b] || {n:0, c:0};
+    byBias[a.b].n++; if(a.correct) byBias[a.b].c++;
+  });
+  return `<div class="between"><div><div class="kicker">RESULT</div><h1 class="h1" style="margin-top:6px">这一组的结果</h1><p class="lead" style="margin-top:8px">正确率不是唯一指标；置信度与实际的差距同样重要。</p></div><button class="btn btn-quiet" data-act="nav" data-to="today">回今日</button></div>
+  <div class="result-grid section">
+    <section class="card result-hero">
+      <div class="ring" style="--p:${clamp(acc * 100, 0, 100)}"><div class="ring-in"><b>${pct(acc)}%</b><span>正确率</span></div></div>
+      <h2>${r.correct} / ${r.total} 题</h2>
+      <p>${acc >= .8 ? '这一组很稳，继续保持。' : acc >= .6 ? '有进步空间，重点看下面的偏差。' : '先把反馈里的“被忽略信息”看一遍。'}</p>
+      <div class="result-stats">
+        <div class="result-stat"><b>${pct(r.avgConf)}%</b><span>平均置信度</span></div>
+        <div class="result-stat"><b>${r.brier.toFixed(2)}</b><span>Brier（越低越好）</span></div>
+        <div class="result-stat"><b>${mm}:${pad(ss)}</b><span>用时</span></div>
+        <div class="result-stat"><b>${Object.keys(byBias).length}</b><span>涉及偏差</span></div>
+      </div>
+    </section>
+    <section class="card">
+      <div class="between"><h2 class="h3">偏差命中</h2><span class="tiny">按题号顺序</span></div>
+      <div style="margin-top:14px">
+        ${r.answers.map((a, i) => { const q = QMAP[a.qid]; return `<div class="review-item"><div class="row" style="justify-content:space-between"><span class="q">${i + 1}. ${esc(q ? q.s : '')}</span><span class="chip ${a.correct ? 'green' : 'red'}">${a.correct ? '对' : '错'}</span></div><div class="a">正确：${esc(B[a.b].n)} · 你选：${esc(B[a.chosen].n)} · 置信度 ${pct(a.confidence)}%</div></div>`; }).join('')}
+      </div>
+      <div class="row" style="margin-top:18px;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-primary" data-act="start-plan">${icon('play')} 再练一组</button>
+        <button class="btn btn-ghost" data-act="nav" data-to="review">${icon('chart')} 看复盘</button>
+      </div>
+    </section>
+  </div>`;
+}
+
+/* ================= cases ================= */
+function casesView(){
+  return `<div class="between"><div><div class="kicker">CASES</div><h1 class="h1" style="margin-top:6px">案例</h1><p class="lead" style="margin-top:8px">先判断，后揭示；练习信息更新，而不是猜结果。</p></div><span class="chip">${CASES.length} 个教学案例</span></div>
+  <div class="case-grid section">
+    ${CASES.map(c => { const done = state.caseSessions[c.id] && state.caseSessions[c.id].completed; return `<article class="card hoverable case-card" role="button" tabindex="0" data-act="open-case" data-id="${c.id}"><div class="top"><span class="domain">${esc(c.domain)}</span><span class="chip ${done ? 'green' : 'gray'}">${done ? '已完成' : c.diff}</span></div><h3>${esc(c.title)}</h3><p>${esc(c.summary)}</p><div class="foot"><span class="tag">${c.biases.map(b => B[b].n).join(' · ')}</span><span class="go">进入 ${icon('arrow')}</span></div></article>`; }).join('')}
+  </div>
+  <p class="tiny" style="margin-top:16px">教学案例为虚构合成，用于练习；正式案例需真实来源与事实核验。</p>`;
+}
+
+function caseView(id){
+  const c = CASES.find(x => x.id === id);
+  if(!c) return `<div class="empty"><h3>案例不存在</h3><button class="btn btn-primary" data-act="nav" data-to="cases">回案例库</button></div>`;
+  const cs = caseState(id);
+  if(cs.step !== 'decision' && !cs.decision){ cs.step = 'decision'; cs.block = 0; }
+  const step = cs.step;
+  const prog = step === 'decision' ? 0.08 : step === 'blocks' ? (0.2 + cs.block / c.blocks.length * 0.55) : step === 'outcome' ? 0.9 : 1;
+  const head = `<div class="between"><div><div class="kicker">CASE · ${esc(c.domain)}</div><h1 class="h1" style="margin-top:6px;max-width:820px">${esc(c.title)}</h1><p class="lead" style="margin-top:8px">${esc(c.summary)}</p></div><button class="btn btn-quiet" data-act="nav" data-to="cases">${icon('back')} 回案例库</button></div>`;
+  let body = '';
+  if(step === 'decision'){
+    body = `<div class="reading">
+      <div class="case-progress">${[0,1,2,3].map(i => `<i class="${i === 0 ? 'on' : ''}"></i>`).join('')}</div>
+      <section class="card block"><h2>背景</h2><p>${esc(c.background)}</p><div class="quote">${esc(c.summary)}</div></section>
+      <section class="case-decision">
+        <h3>${esc(c.decision.q)}</h3><p class="tiny">先选，再写理由；提交后才会解锁后续信息。</p>
+        <div class="options">
+          ${c.decision.options.map((o, i) => `<button class="option ${cs.decision && cs.decision.choice === i ? 'selected' : ''}" data-act="case-choose" data-i="${i}"><span class="key">${String.fromCharCode(65 + i)}</span><span class="txt">${esc(o)}</span><span class="check">${icon('check')}</span></button>`).join('')}
+        </div>
+        <div class="field" style="margin-top:16px"><label>理由（1–3 句）</label><textarea class="textarea" data-case-reason placeholder="我选它，因为……">${esc(cs.decision ? cs.decision.reason : '')}</textarea></div>
+        <div class="confidence" style="margin-top:14px"><div class="top"><b>置信度</b><span id="caseConfVal">${cs.decision ? cs.decision.confidence : 70}%</span></div><input type="range" min="50" max="100" step="10" value="${cs.decision ? cs.decision.confidence : 70}" data-case-conf></div>
+        <div style="margin-top:18px"><button class="btn btn-primary btn-lg btn-block" data-act="case-decide">${icon('arrow')} 提交判断，解锁信息</button></div>
+      </section>
+    </div>`;
+  }else if(step === 'blocks'){
+    body = `<div class="reading">
+      <div class="case-progress">${[0,1,2,3].map(i => `<i class="${i <= Math.min(3, 1 + cs.block) ? 'on' : ''}"></i>`).join('')}</div>
+      <section class="card block"><h2>你的判断</h2><p>${esc(c.decision.options[cs.decision.choice])}</p><div class="quote">理由：${esc(cs.decision.reason || '（未填写）')} · 置信度 ${cs.decision.confidence}%</div></section>
+      ${c.blocks.slice(0, cs.block + 1).map((b, i) => `<section class="case-block"><div class="n">信息切片 ${i + 1} / ${c.blocks.length}</div><p>${esc(b)}</p>${i < cs.block ? `<div class="quote">你的更新：${cs.updates[i] ? (cs.updates[i].changed ? '改变判断' : '维持判断') + ' · ' + esc(cs.updates[i].reason || '') : ''}</div>` : ''}</section>`).join('')}
+      ${cs.block < c.blocks.length ? `<section class="card block" style="margin-top:16px"><h3>看到这条信息后，你的判断变了吗？</h3><p class="tiny">不是问“结果对不对”，而是问“新信息是否改变了我的理由”。</p><div class="field" style="margin-top:12px"><textarea class="textarea" data-case-block-reason placeholder="哪条信息改变了/没有改变我的判断？"></textarea></div><div class="row" style="margin-top:12px"><button class="btn btn-ghost" data-act="case-block" data-changed="0">维持判断</button><button class="btn btn-primary" data-act="case-block" data-changed="1">改变判断 ${icon('arrow')}</button></div></section>` : ''}
+    </div>`;
+  }else if(step === 'outcome'){
+    body = `<div class="reading">
+      <div class="case-progress">${[0,1,2,3].map(i => `<i class="on"></i>`).join('')}</div>
+      <section class="card block"><div class="kicker">OUTCOME</div><h2>真实选择与结果</h2><p>${esc(c.outcome)}</p></section>
+      <section class="card block" style="margin-top:16px"><div class="kicker">REVIEW</div><h2>复盘</h2><p>${esc(c.review)}</p><div class="quote">${esc(c.transfer)}</div><div class="field" style="margin-top:14px"><label>写一句“我的迁移”</label><textarea class="textarea" data-case-transfer placeholder="我最近一次类似决策是……下次我会……">${esc(cs.transfer || '')}</textarea></div><button class="btn btn-primary btn-lg" style="margin-top:14px" data-act="case-finish">${icon('check')} 完成复盘</button></section>
+    </div>`;
+  }else{
+    body = `<div class="reading">
+      <section class="card block"><div class="kicker">DONE</div><h2>案例完成</h2><p>你的判断：${esc(c.decision.options[cs.decision.choice])}</p><p class="tiny">信息更新 ${cs.updates.filter(u => u.changed).length} 次 · 迁移句已保存</p><div class="quote">${esc(cs.transfer || '（未填写迁移句）')}</div>
+      <div class="row" style="margin-top:16px;flex-wrap:wrap"><button class="btn btn-primary" data-act="case-canvas" data-id="${c.id}">${icon('canvas')} 用七步法拆解</button><button class="btn btn-quiet" data-act="case-reset" data-id="${c.id}">重新体验</button></div></section>
+    </div>`;
+  }
+  return head + body;
+}
+
+/* ================= canvas views ================= */
+function canvasListView(){
+  const list = state.canvases.slice().sort((a, b) => b.updatedAt - a.updatedAt);
+  return `<div class="between"><div><div class="kicker">CANVAS</div><h1 class="h1" style="margin-top:6px">拆解</h1><p class="lead" style="margin-top:8px">七步把模糊问题变成可执行、可复盘的决策。</p></div><span class="chip">${list.length} 张画布</span></div>
+  <div class="grid g2 section">
+    <section class="card">
+      <div class="kicker">NEW</div><h2 class="h3" style="margin-top:6px">新建一张画布</h2>
+      <div class="field" style="margin-top:14px"><label>标题</label><input class="input" id="newCanvasTitle" placeholder="例如：要不要接受这份 offer"></div>
+      <div class="field" style="margin-top:12px"><label>模板</label><select class="select" id="newCanvasTemplate">${TEMPLATES.map(t => `<option value="${esc(t.name)}">${esc(t.name)} · ${esc(t.desc)}</option>`).join('')}</select></div>
+      <button class="btn btn-primary btn-lg" style="margin-top:14px" data-act="canvas-create">${icon('plus')} 开始七步拆解</button>
+    </section>
+    <section class="card soft">
+      <div class="kicker">TEMPLATES</div><h2 class="h3" style="margin-top:6px">6 套模板</h2>
+      <div class="stack" style="margin-top:12px">
+        ${TEMPLATES.map(t => `<button class="log-row" style="border:0;background:none;text-align:left;width:100%" data-act="canvas-template" data-id="${esc(t.id)}"><span class="ico">${icon('layers')}</span><span class="body"><b>${esc(t.name)}</b><span>${esc(t.desc)}</span></span>${icon('arrow')}</button>`).join('')}
+      </div>
+    </section>
+  </div>
+  <section class="card section">
+    <div class="between"><h2 class="h3">我的画布</h2><span class="tiny">按最近编辑排序</span></div>
+    ${list.length ? `<div class="stack" style="margin-top:12px">${list.map(c => `<div class="log-row" data-act="open-canvas" data-id="${c.id}" style="cursor:pointer"><span class="ico">${icon('canvas')}</span><div class="body"><b>${esc(c.title)}</b><span>第 ${c.step || 1}/7 步 · ${esc(c.template || '通用决策')} · ${timeLabel(c.updatedAt)}</span></div><span class="chip ${c.status === 'done' ? 'green' : 'gray'}">${c.status === 'done' ? '已完成' : '草稿'}</span></div>`).join('')}</div>` : `<div class="empty"><div class="art">${icon('canvas')}</div><h3>还没有画布</h3><p>从上面的模板开始，或从案例一键生成。</p></div>`}
+  </section>`;
+}
+
+function canvasEditor(id){
+  const c = getCanvas(id);
+  if(!c) return `<div class="empty"><h3>画布不存在</h3><button class="btn btn-primary" data-act="nav" data-to="canvas">回拆解</button></div>`;
+  const step = clamp(Number(c.step) || 1, 1, 7);
+  const def = CANVAS_STEPS[step - 1];
+  const data = (c.data && c.data[step]) || {};
+  const score = canvasScore(c);
+  const fields = def.fields.map(f => {
+    if(f.type === 'bias'){
+      const arr = Array.isArray(data[f.k]) ? data[f.k] : [];
+      return `<div class="canvas-field"><label>${f.label}${f.req ? '<em>*</em>' : ''}</label><div class="bias-checks">${BIASES.map(b => `<button class="bias-check ${arr.includes(b.c) ? 'on' : ''}" data-act="toggle-bias" data-code="${b.c}"><span class="box">${arr.includes(b.c) ? icon('check') : ''}</span>${esc(b.n)}</button>`).join('')}</div><div class="hint">至少选 1 项；第 4 步的核心不是贴标签，而是写反证。</div></div>`;
+    }
+    const val = esc(data[f.k] || '');
+    if(f.type === 'textarea') return `<div class="canvas-field"><label>${f.label}${f.req ? '<em>*</em>' : ''}</label><textarea class="textarea" data-canvas-key="${f.k}" data-step="${step}" placeholder="${esc(f.ph)}">${val}</textarea></div>`;
+    return `<div class="canvas-field"><label>${f.label}${f.req ? '<em>*</em>' : ''}</label><input class="input" data-canvas-key="${f.k}" data-step="${step}" placeholder="${esc(f.ph)}" value="${val}"></div>`;
+  }).join('');
+  return `<div class="between"><div><div class="kicker">CANVAS · 七步</div><h1 class="h1" style="margin-top:6px">${esc(c.title)}</h1><p class="lead" style="margin-top:8px">${esc(c.template || '通用决策')} · 停在输入 1.5 秒自动保存</p></div><div class="row"><span class="chip gray">本地草稿</span><button class="btn btn-quiet" data-act="nav" data-to="canvas">${icon('back')} 返回</button></div></div>
+  <div class="canvas-layout section">
+    <div class="stepper">
+      ${CANVAS_STEPS.map(s => { const filled = Object.values(c.data[s.n] || {}).some(v => Array.isArray(v) ? v.length : String(v || '').trim().length > 0); return `<button class="step-dot ${s.n === step ? 'active' : ''} ${filled ? 'done' : ''}" data-act="canvas-step" data-step="${s.n}"><span class="num">${filled && s.n !== step ? icon('check') : s.n}</span><span class="lbl">${esc(s.title)}</span></button>`; }).join('')}
+    </div>
+    <section class="card canvas-editor">
+      <div class="head"><div><div class="kicker">STEP ${step} / 7</div><h2>${esc(def.title)}</h2><p>${esc(def.sub)}</p></div><div class="save" id="saveBadge">已保存</div></div>
+      ${fields}
+      <div class="score-card"><div class="ring" style="--p:${clamp(score.score / 12 * 100, 0, 100)}"><div class="ring-in"><b>${score.score}</b><span>/ 12</span></div></div><div><b style="font-size:12.5px">拆解完整度</b><p>必填 ${score.filled}/${score.total} 项。≥8 分合格，≥10 分优秀。</p></div></div>
+      <div class="canvas-nav"><button class="btn btn-quiet" data-act="canvas-step" data-step="${Math.max(1, step - 1)}" ${step === 1 ? 'disabled' : ''}>${icon('back')} 上一步</button><div class="row"><button class="btn btn-quiet" data-act="canvas-check">检查</button>${step < 7 ? `<button class="btn btn-primary" data-act="canvas-step" data-step="${step + 1}">下一步 ${icon('arrow')}</button>` : `<button class="btn btn-primary" data-act="canvas-finish">生成拆解卡 ${icon('check')}</button>`}</div></div>
+    </section>
+  </div>`;
+}
+
+function canvasResultView(id){
+  const c = getCanvas(id);
+  if(!c) return `<div class="empty"><h3>画布不存在</h3><button class="btn btn-primary" data-act="nav" data-to="canvas">回拆解</button></div>`;
+  const score = canvasScore(c);
+  return `<div class="between"><div><div class="kicker">CANVAS RESULT</div><h1 class="h1" style="margin-top:6px">${esc(c.title)}</h1><p class="lead" style="margin-top:8px">${esc(c.template || '通用决策')} · ${score.score}/12 分</p></div><div class="row no-print"><button class="btn btn-quiet" data-act="canvas-export" data-id="${c.id}">${icon('download')} 导出</button><button class="btn btn-primary" data-act="canvas-print">${icon('book')} 打印/PDF</button></div></div>
+  <section class="card section">
+    <div class="row" style="gap:18px;align-items:center"><div class="ring" style="--p:${clamp(score.score / 12 * 100, 0, 100)}"><div class="ring-in"><b>${score.score}</b><span>/ 12</span></div></div><div><h2 class="h3">拆解完整度</h2><p class="lead">必填 ${score.filled}/${score.total} 项。打开打印可保存为 PDF。</p></div></div>
+  </section>
+  <div class="grid g2 section">
+    ${CANVAS_STEPS.map(s => `<section class="card"><div class="kicker">STEP ${s.n}</div><h3 class="h3" style="margin-top:6px">${esc(s.title)}</h3><div class="stack" style="margin-top:12px">${s.fields.map(f => { const v = c.data && c.data[s.n] && c.data[s.n][f.k]; const text = Array.isArray(v) ? v.map(x => B[x] ? B[x].n : x).join('、') : (v || ''); return `<div><div class="tag">${esc(f.label)}</div><p style="font-size:12.5px;line-height:1.7;margin-top:3px;white-space:pre-wrap">${esc(text || '—')}</p></div>`; }).join('')}</div></section>`).join('')}
+  </div>
+  <div class="row no-print" style="margin-top:18px"><button class="btn btn-quiet" data-act="open-canvas" data-id="${c.id}">${icon('back')} 继续编辑</button><button class="btn btn-danger" data-act="canvas-delete" data-id="${c.id}">${icon('trash')} 删除</button></div>`;
+}
+
+/* ================= review ================= */
+function reviewView(){
+  const w = weekly();
+  const max = Math.max(1, ...w.map(d => d.n));
+  const total = totalStats();
+  const bins = calibBins();
+  const active = w.filter(d => d.n > 0).length;
+  const casesDone = Object.values(state.caseSessions).filter(c => c.completed).length;
+  const canvases = state.canvases.slice().sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 5);
+  const weak = topWeak(3);
+  return `<div class="between"><div><div class="kicker">REVIEW</div><h1 class="h1" style="margin-top:6px">复盘</h1><p class="lead" style="margin-top:8px">看趋势，不看单次结果；看校准，不只看正确率。</p></div><div class="row no-print"><button class="btn btn-quiet" data-act="print-review">${icon('book')} 打印周报</button><button class="btn btn-primary" data-act="nav" data-to="today">${icon('play')} 继续训练</button></div></div>
+  <div class="grid g4 section">
+    <div class="stat"><b>${w.reduce((s, d) => s + d.n, 0)}</b><span>本周作答</span></div>
+    <div class="stat"><b>${total.n ? pct(total.acc) + '%' : '—'}</b><span>总体正确率</span></div>
+    <div class="stat"><b>${active}/7</b><span>活跃天数</span></div>
+    <div class="stat"><b>${casesDone}</b><span>完成案例</span></div>
+  </div>
+  <div class="grid g2 section">
+    <section class="card chart-card"><div class="between"><h2 class="h3">7 天训练量</h2><span class="tiny">柱高 = 作答数</span></div><div class="chart">${w.map(d => `<div class="col"><div class="bar" style="height:${Math.max(4, d.n / max * 100)}%"></div><div class="cap">${d.label}</div></div>`).join('')}</div></section>
+    <section class="card chart-card"><div class="between"><h2 class="h3">校准曲线</h2><span class="tiny">置信度 vs 实际</span></div><div class="calib">${bins.map(b => `<div class="col"><div class="pair"><div class="bar p" style="height:${Math.max(3, b.pred * 110)}px" title="平均置信度"></div><div class="bar a" style="height:${Math.max(3, b.actual * 110)}px" title="实际正确率"></div></div><div class="lbl">${b.label}<br>${b.n ? b.n + '题' : '—'}</div></div>`).join('')}</div><div class="legend"><span><i style="background:#BFDDFB"></i>平均置信度</span><span><i style="background:#0A84FF"></i>实际正确率</span></div></section>
+  </div>
+  <div class="grid g2 section">
+    <section class="card"><div class="between"><h2 class="h3">弱项</h2><span class="tiny">按正确率</span></div><div class="weak-list" style="margin-top:14px">${weak.length ? weak.map(x => `<div class="weak-row"><div class="name">${esc(x.n)}</div><div class="track"><i style="width:${clamp(x.acc * 100, 3, 100)}%"></i></div><div class="val">${pct(x.acc)}%</div></div>`).join('') : `<p class="tiny">完成训练后生成。</p>`}</div></section>
+    <section class="card"><div class="between"><h2 class="h3">最近画布</h2><button class="btn btn-sm btn-ghost" data-act="nav" data-to="canvas">全部</button></div>${canvases.length ? `<div class="stack" style="margin-top:10px">${canvases.map(c => `<div class="log-row" data-act="open-canvas" data-id="${c.id}" style="cursor:pointer"><span class="ico">${icon('canvas')}</span><div class="body"><b>${esc(c.title)}</b><span>${esc(c.template || '通用决策')} · ${timeLabel(c.updatedAt)}</span></div><span class="chip ${c.status === 'done' ? 'green' : 'gray'}">${c.status === 'done' ? '完成' : '草稿'}</span></div>`).join('')}</div>` : `<p class="tiny" style="margin-top:12px">还没有画布。</p>`}</section>
+  </div>`;
+}
+
+/* ================= profile / data ================= */
+function profileView(){
+  const p = state.profile;
+  const total = totalStats();
+  const name = p.nickname || '学习者';
+  const cards = state.canvases.length;
+  const cases = Object.values(state.caseSessions).filter(c => c.completed).length;
+  const days = (p.days || []).length;
+  return `<div class="between"><div><div class="kicker">PROFILE</div><h1 class="h1" style="margin-top:6px">我的</h1><p class="lead" style="margin-top:8px">本地档案 · 数据只存这台设备</p></div><button class="btn btn-quiet" data-act="nav" data-to="data">${icon('save')} 数据与备份</button></div>
+  <section class="card profile-hero section"><div class="avatar">${esc(name.slice(0, 1))}</div><div style="flex:1"><h2>${esc(name)}</h2><p>${p.createdAt ? '从 ' + new Date(p.createdAt).toLocaleDateString('zh-CN') + ' 开始' : '刚刚开始'} · 连续 ${streak()} 天</p></div><span class="chip green">离线</span></section>
+  <div class="grid g4 section">
+    <div class="stat"><b>${total.n}</b><span>累计作答</span></div>
+    <div class="stat"><b>${days}</b><span>训练天数</span></div>
+    <div class="stat"><b>${cases}</b><span>完成案例</span></div>
+    <div class="stat"><b>${cards}</b><span>拆解画布</span></div>
+  </div>
+  <section class="card section">
+    <h2 class="h3">设置</h2>
+    <div class="settings-row"><div><div class="lbl">昵称</div><div class="desc">显示在首页与档案</div></div><input class="input" style="width:200px" data-profile-name value="${esc(name)}" maxlength="12"></div>
+    <div class="settings-row"><div><div class="lbl">每日目标</div><div class="desc">影响今日组卷数量</div></div><div class="segment">${[5,10,15].map(n => `<button data-act="set-goal" data-goal="${n}" class="${p.goal === n ? 'on' : ''}">${n} 题</button>`).join('')}</div></div>
+    <div class="settings-row"><div><div class="lbl">数据与备份</div><div class="desc">导出 JSON、导入恢复、清空</div></div><button class="btn btn-ghost" data-act="nav" data-to="data">${icon('save')} 打开</button></div>
+    <div class="settings-row"><div><div class="lbl">离线与隐私</div><div class="desc">不申请网络权限；无统计/广告 SDK</div></div><span class="chip green">本地</span></div>
+  </section>
+  <section class="card section soft"><div class="kicker">ABOUT</div><h3 class="h3" style="margin-top:6px">明理 ClearLogic · HTML 离线版</h3><p class="tiny" style="margin-top:8px">单文件 Web App，双击即可打开。数据存于浏览器 localStorage；清理浏览器数据或换设备前，请在「数据与备份」导出 JSON。教学案例为虚构合成，仅用于训练。</p></section>`;
+}
+
+function dataView(){
+  const bytes = new Blob([JSON.stringify(state)]).size;
+  const kb = (bytes / 1024).toFixed(1);
+  return `<div class="between"><div><div class="kicker">DATA</div><h1 class="h1" style="margin-top:6px">数据与备份</h1><p class="lead" style="margin-top:8px">导出是唯一可靠的跨设备/清理前备份。</p></div><button class="btn btn-quiet" data-act="nav" data-to="profile">${icon('back')} 返回</button></div>
+  <div class="grid g2 section">
+    <section class="card"><div class="kicker">EXPORT</div><h2 class="h3" style="margin-top:6px">导出全部数据</h2><p class="lead" style="margin-top:8px">生成一个 JSON 文件，包含档案、作答、案例进度、画布。</p><div class="row" style="margin-top:16px"><button class="btn btn-primary" data-act="export-data">${icon('download')} 导出 JSON</button><span class="tiny">当前约 ${kb} KB</span></div></section>
+    <section class="card"><div class="kicker">IMPORT</div><h2 class="h3" style="margin-top:6px">从备份恢复</h2><p class="lead" style="margin-top:8px">导入会覆盖当前数据；建议先导出当前状态。</p><div class="row" style="margin-top:16px"><button class="btn btn-ghost" data-act="import-data">${icon('upload')} 选择 JSON</button><input type="file" id="importInput" accept="application/json,.json" class="hidden"></div></section>
+  </div>
+  <section class="card section"><div class="kicker">DANGER</div><h2 class="h3" style="margin-top:6px">清空本地数据</h2><p class="lead" style="margin-top:8px">删除全部训练记录、案例进度与画布，不可恢复。</p><button class="btn btn-danger" style="margin-top:14px" data-act="clear-data">${icon('trash')} 清空全部数据</button></section>
+  <section class="card section soft"><div class="kicker">NOTE</div><h3 class="h3" style="margin-top:6px">离线说明</h3><p class="tiny" style="margin-top:8px">本文件不加载任何外部资源，不发起网络请求。数据保存在浏览器 localStorage；换浏览器、无痕模式、清理站点数据都会导致数据丢失。建议每周导出一次备份。</p></section>`;
+}
+
+/* ================= render ================= */
+function render(){
+  closeModal();
+  if(!state.profile.onboarded){
+    document.getElementById('app').innerHTML = onboarding();
+    return;
+  }
+  const r = parseHash();
+  let active = r.view;
+  let html = '';
+  if(r.view === 'today'){ html = todayView(); active = 'today'; }
+  else if(r.view === 'training'){ html = trainingView(); active = 'training'; }
+  else if(r.view === 'session'){ html = sessionView(); active = 'training'; }
+  else if(r.view === 'result'){ html = resultView(); active = 'training'; }
+  else if(r.view === 'cases'){ html = casesView(); active = 'cases'; }
+  else if(r.view === 'case'){ html = caseView(r.id); active = 'cases'; }
+  else if(r.view === 'canvas'){ html = r.sub === 'result' ? canvasResultView(r.id) : (r.id ? canvasEditor(r.id) : canvasListView()); active = 'canvas'; }
+  else if(r.view === 'review'){ html = reviewView(); active = 'review'; }
+  else if(r.view === 'profile'){ html = profileView(); active = 'profile'; }
+  else if(r.view === 'data'){ html = dataView(); active = 'profile'; }
+  else { html = todayView(); active = 'today'; }
+  document.getElementById('app').innerHTML = shell(html, active);
+  if(ui.lastHash !== location.hash){
+    window.scrollTo(0, 0);
+    ui.lastHash = location.hash;
+  }
+}
+
+/* ================= events ================= */
+let toastTimer = null;
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+}
+function openModal(html){
+  document.getElementById('modal-root').innerHTML = `<div class="modal" data-act="close-modal-bg"><div class="box" data-stop="1">${html}</div></div>`;
+}
+function closeModal(){ document.getElementById('modal-root').innerHTML = ''; }
+
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-act]');
+  if(!el) return;
+  const act = el.dataset.act;
+  if(act === 'nav'){ closeModal(); go(el.dataset.to); return; }
+  if(act === 'onboard-goal'){
+    ui.onboardGoal = Number(el.dataset.goal);
+    $$('#onboardGoal button').forEach(b => b.classList.toggle('on', b === el));
+    return;
+  }
+  if(act === 'finish-onboard'){
+    const name = ($('#onboardName') && $('#onboardName').value.trim()) || '学习者';
+    state.profile.nickname = name;
+    state.profile.goal = ui.onboardGoal || 10;
+    state.profile.onboarded = true;
+    state.profile.createdAt = state.profile.createdAt || Date.now();
+    state.plan = null;
+    save();
+    go('today');
+    render();
+    return;
+  }
+  if(act === 'start-plan'){ closeModal(); startPlan(); return; }
+  if(act === 'drill'){ startDrill(el.dataset.bias); return; }
+  if(act === 'training-tab'){ ui.trainingTab = el.dataset.tab; render(); return; }
+  if(act === 'retry-mistake'){ startSession([el.dataset.qid], 'drill'); return; }
+  if(act === 'select-option'){
+    if(!state.session || state.session.feedback) return;
+    state.session.selected = el.dataset.code;
+    save(); render(); return;
+  }
+  if(act === 'submit-answer'){ submitAnswer(); return; }
+  if(act === 'next-question'){ nextQuestion(); return; }
+  if(act === 'close-session'){
+    if(state.session){ save(); }
+    go('today');
+    toast('已保存，可继续训练');
+    return;
+  }
+  if(act === 'open-case'){ closeModal(); go('case/' + el.dataset.id); return; }
+  if(act === 'case-choose'){
+    const c = CASES.find(x => x.id === parseHash().id);
+    const cs = caseState(c.id);
+    cs.decision = Object.assign(cs.decision || {confidence:70, reason:''}, {choice:Number(el.dataset.i)});
+    save(); render(); return;
+  }
+  if(act === 'case-decide'){
+    const c = CASES.find(x => x.id === parseHash().id);
+    const cs = caseState(c.id);
+    if(!cs.decision || cs.decision.choice == null){ toast('先选一个选项'); return; }
+    cs.decision.reason = ($('[data-case-reason]') && $('[data-case-reason]').value.trim()) || '';
+    cs.decision.confidence = clamp(Number(($('[data-case-conf]') || {}).value) || 70, 50, 100);
+    cs.step = 'blocks'; cs.block = 0; save(); render(); return;
+  }
+  if(act === 'case-block'){
+    const c = CASES.find(x => x.id === parseHash().id);
+    const cs = caseState(c.id);
+    const reason = ($('[data-case-block-reason]') && $('[data-case-block-reason]').value.trim()) || '';
+    cs.updates.push({i:cs.block, changed:el.dataset.changed === '1', reason});
+    cs.block++;
+    if(cs.block >= c.blocks.length) cs.step = 'outcome';
+    save(); render(); return;
+  }
+  if(act === 'case-finish'){
+    const c = CASES.find(x => x.id === parseHash().id);
+    const cs = caseState(c.id);
+    cs.transfer = ($('[data-case-transfer]') && $('[data-case-transfer]').value.trim()) || '';
+    cs.completed = true; cs.step = 'done';
+    const day = dayKey();
+    if(!(state.profile.days || []).includes(day)) state.profile.days.push(day);
+    save(); render(); toast('案例完成'); return;
+  }
+  if(act === 'case-reset'){
+    const id = el.dataset.id;
+    if(!confirm('重新体验会清除这个案例的判断与复盘，确定？')) return;
+    delete state.caseSessions[id]; save(); render(); return;
+  }
+  if(act === 'case-canvas'){ createCanvasFromCase(el.dataset.id); return; }
+  if(act === 'canvas-create'){
+    const title = ($('#newCanvasTitle') && $('#newCanvasTitle').value.trim()) || '';
+    const tpl = ($('#newCanvasTemplate') && $('#newCanvasTemplate').value) || '通用决策';
+    newCanvas(tpl, title || (tpl + ' · ' + dateLabel()));
+    return;
+  }
+  if(act === 'canvas-template'){
+    const t = TEMPLATES.find(x => x.id === el.dataset.id);
+    if(t){ if($('#newCanvasTemplate')) $('#newCanvasTemplate').value = t.name; if($('#newCanvasTitle')) $('#newCanvasTitle').value = t.name + ' · ' + dateLabel(); toast('模板已选，点“开始七步拆解”'); }
+    return;
+  }
+  if(act === 'open-canvas'){ go('canvas/' + el.dataset.id); return; }
+  if(act === 'canvas-step'){
+    const c = currentCanvas(); if(!c) return;
+    c.step = clamp(Number(el.dataset.step) || 1, 1, 7);
+    c.updatedAt = Date.now(); save(); render(); return;
+  }
+  if(act === 'toggle-bias'){
+    const c = currentCanvas(); if(!c) return;
+    c.data = c.data || {};
+    c.data[4] = c.data[4] || {};
+    const arr = Array.isArray(c.data[4].bias) ? c.data[4].bias : [];
+    const code = el.dataset.code;
+    c.data[4].bias = arr.includes(code) ? arr.filter(x => x !== code) : arr.concat(code);
+    c.updatedAt = Date.now(); save(); render(); return;
+  }
+  if(act === 'canvas-check'){
+    const c = currentCanvas(); if(!c) return;
+    const miss = canvasMissing(c);
+    if(!miss.length){ toast('检查通过，可以生成拆解卡'); return; }
+    openModal(`<div class="kicker">CHECK</div><h3 style="margin-top:6px">还差 ${miss.length} 项</h3><p>不要求一次写完美；先把空着的必填项补上。</p><div class="stack" style="margin-top:14px">${miss.map(m => `<div class="row"><span class="dot orange"></span><span class="tiny">${esc(m)}</span></div>`).join('')}</div><div class="row" style="margin-top:18px;justify-content:flex-end"><button class="btn btn-ghost" data-act="close-modal">知道了</button></div>`);
+    return;
+  }
+  if(act === 'canvas-finish'){
+    const c = currentCanvas(); if(!c) return;
+    c.status = 'done'; c.updatedAt = Date.now(); save(); go('canvas/' + c.id + '/result'); return;
+  }
+  if(act === 'canvas-export'){
+    const c = getCanvas(el.dataset.id); if(!c) return;
+    const blob = new Blob([JSON.stringify(c, null, 2)], {type:'application/json'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'canvas-' + c.id + '.json'; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 800);
+    toast('画布已导出');
+    return;
+  }
+  if(act === 'canvas-print'){ window.print(); return; }
+  if(act === 'canvas-delete'){
+    const c = getCanvas(el.dataset.id); if(!c) return;
+    if(!confirm('删除这张画布？不可恢复。')) return;
+    state.canvases = state.canvases.filter(x => x.id !== c.id); save(); go('canvas'); return;
+  }
+  if(act === 'export-data'){ exportData(); return; }
+  if(act === 'import-data'){ if($('#importInput')) $('#importInput').click(); return; }
+  if(act === 'clear-data'){ clearAll(); return; }
+  if(act === 'set-goal'){
+    state.profile.goal = Number(el.dataset.goal); state.plan = null; save(); render(); toast('每日目标已更新'); return;
+  }
+  if(act === 'print-review'){ window.print(); return; }
+  if(act === 'close-modal-bg'){
+    if(e.target === el) closeModal();
+    return;
+  }
+  if(act === 'close-modal'){ closeModal(); return; }
+});
+
+document.addEventListener('input', (e) => {
+  const t = e.target;
+  if(t.matches('[data-session-conf]')){
+    if(state.session){ state.session.confidence = Number(t.value); const v = $('#confVal'); if(v) v.textContent = t.value + '%'; }
+    return;
+  }
+  if(t.matches('[data-case-conf]')){
+    const v = $('#caseConfVal'); if(v) v.textContent = t.value + '%';
+    return;
+  }
+  if(t.matches('[data-case-reason]')){
+    const c = CASES.find(x => x.id === parseHash().id);
+    if(c){ const cs = caseState(c.id); cs.decision = Object.assign(cs.decision || {choice:null,confidence:70}, {reason:t.value}); }
+    return;
+  }
+  if(t.matches('[data-canvas-key]')){
+    const c = currentCanvas(); if(!c) return;
+    const step = Number(t.dataset.step); const key = t.dataset.key;
+    c.data[step] = c.data[step] || {};
+    c.data[step][key] = t.value;
+    c.updatedAt = Date.now();
+    scheduleSave();
+    return;
+  }
+  if(t.matches('[data-profile-name]')){
+    state.profile.nickname = t.value.trim().slice(0, 12) || '学习者';
+    save();
+    return;
+  }
+});
+
+document.addEventListener('change', (e) => {
+  const t = e.target;
+  if(t.id === 'importInput' && t.files && t.files[0]){
+    importData(t.files[0]);
+    t.value = '';
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Enter' && e.target && e.target.getAttribute && e.target.getAttribute('role') === 'button'){
+    e.preventDefault(); e.target.click(); return;
+  }
+  if(!state.session) return;
+  const tag = (e.target && e.target.tagName ? e.target.tagName : '').toLowerCase();
+  if(['input','textarea','select'].includes(tag)) return;
+  if(!state.session.feedback && ['1','2','3','4'].includes(e.key)){
+    const code = state.session.opts[Number(e.key) - 1];
+    if(code){ e.preventDefault(); state.session.selected = code; save(); render(); }
+    return;
+  }
+  if(e.key === 'Enter'){
+    e.preventDefault();
+    if(state.session.feedback) nextQuestion(); else submitAnswer();
+  }
+});
+
+window.addEventListener('hashchange', render);
+window.addEventListener('beforeunload', save);
+
+if(!location.hash) location.hash = '#/today';
+render();
+
+</script>
+
+<script>
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  });
+}
+</script>
+</body>
+</html>

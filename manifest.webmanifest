@@ -1,0 +1,54 @@
+{
+  "name": "明理 ClearLogic · 底层逻辑训练",
+  "short_name": "明理",
+  "description": "离线单机的认知偏差与七步拆解训练：60 道情境题、6 个案例、七步画布。",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F5F9FF",
+  "theme_color": "#F5F9FF",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "今日训练",
+      "short_name": "今日",
+      "url": "./#/today",
+      "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]
+    },
+    {
+      "name": "看案例",
+      "short_name": "案例",
+      "url": "./#/cases",
+      "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]
+    },
+    {
+      "name": "七步拆解",
+      "short_name": "拆解",
+      "url": "./#/canvas",
+      "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]
+    }
+  ]
+}
